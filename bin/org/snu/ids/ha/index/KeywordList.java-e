@@ -1,0 +1,47 @@
+/*    */ package org.snu.ids.ha.index;
+/*    */ 
+/*    */ import java.util.ArrayList;
+/*    */ import java.util.Hashtable;
+/*    */ import java.util.List;
+/*    */ 
+/*    */ public class KeywordList extends ArrayList<Keyword>
+/*    */ {
+/* 25 */   int docLen = 0;
+/* 26 */   private Hashtable<String, Keyword> table = null;
+/*    */ 
+/*    */   public KeywordList(List<Keyword> list)
+/*    */   {
+/* 32 */     this.table = new Hashtable();
+/* 33 */     addAll(list);
+/*    */   }
+/*    */ 
+/*    */   public void addAll(List<Keyword> list)
+/*    */   {
+/* 40 */     int i = 0; for (int size = list.size(); i < size; i++) {
+/* 41 */       Keyword keyword = (Keyword)list.get(i); Keyword org = null;
+/* 42 */       org = (Keyword)this.table.get(keyword.getKey());
+/* 43 */       this.docLen += keyword.getCnt();
+/* 44 */       if (org == null) {
+/* 45 */         this.table.put(keyword.getKey(), keyword);
+/* 46 */         add(keyword);
+/*    */       } else {
+/* 48 */         org.increaseCnt(keyword.getCnt());
+/*    */       }
+/*    */     }
+/*    */ 
+/* 52 */     int i = 0; for (int size = size(); i < size; i++) {
+/* 53 */       Keyword keyword = (Keyword)get(i);
+/* 54 */       keyword.setFreq(keyword.getCnt() / this.docLen);
+/*    */     }
+/*    */   }
+/*    */ 
+/*    */   public int getDocLen()
+/*    */   {
+/* 64 */     return this.docLen;
+/*    */   }
+/*    */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.index.KeywordList
+ * JD-Core Version:    0.6.1
+ */

@@ -1,0 +1,164 @@
+/*     */ package org.snu.ids.ha.ma;
+/*     */ 
+/*     */ import java.util.ArrayList;
+/*     */ import java.util.Collections;
+/*     */ import java.util.List;
+/*     */ import java.util.regex.Matcher;
+/*     */ import java.util.regex.Pattern;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public class Tokenizer
+/*     */ {
+/*  28 */   public static final TokenPattern[] PREDEFINED_TOKEN_PATTERN = { 
+/*  30 */     new TokenPattern("[a-zA-Z0-9]+[-][a-zA-Z0-9]+", CharSetType.COMBINED), 
+/*  32 */     new TokenPattern("(ㅋ|ㅠ|ㅜ|ㅎ){2,}", CharSetType.EMOTICON), 
+/*  33 */     new TokenPattern("(\\^){3,}", CharSetType.EMOTICON), 
+/*  35 */     new TokenPattern("[-]?[0-9]+([,][0-9]{3})*([.][0-9]+)?", CharSetType.NUMBER), 
+/*  38 */     new TokenPattern("[(][\\^]([.]|_|[-]|o|0|O|3|~|[ ])?[\\^][']?[)]", CharSetType.EMOTICON), 
+/*  39 */     new TokenPattern("[d][\\^]([.]|_|[-]|o|0|O|3|~|[ ])?[\\^][b]", CharSetType.EMOTICON), 
+/*  40 */     new TokenPattern("[\\^]([.]|_|[-]|o|0|O|3|~|[ ])?[\\^]([;]+|['\"avVㅗ])?", CharSetType.EMOTICON), 
+/*  42 */     new TokenPattern("[(];_;[)]", CharSetType.EMOTICON), 
+/*  43 */     new TokenPattern("[(]T[_.~oO\\^]?T[)]", CharSetType.EMOTICON), 
+/*  44 */     new TokenPattern("ㅜ[_.]?ㅜ", CharSetType.EMOTICON), 
+/*  45 */     new TokenPattern("ㅡ[_.]?ㅜ", CharSetType.EMOTICON), 
+/*  46 */     new TokenPattern("ㅜ[_.]?ㅡ", CharSetType.EMOTICON), 
+/*  47 */     new TokenPattern("ㅠ[_.]?ㅠ", CharSetType.EMOTICON), 
+/*  48 */     new TokenPattern("ㅡ[_.]?ㅠ", CharSetType.EMOTICON), 
+/*  49 */     new TokenPattern("ㅠ[_.]?ㅡ", CharSetType.EMOTICON), 
+/*  50 */     new TokenPattern("ㅠ[_.]?ㅜ", CharSetType.EMOTICON), 
+/*  51 */     new TokenPattern("ㅜ[_.]?ㅠ", CharSetType.EMOTICON), 
+/*  54 */     new TokenPattern("[(][-](_|[.])?[-]([;]+|[aㅗ])?[)](zzZ)?", CharSetType.EMOTICON), 
+/*  55 */     new TokenPattern("[-](_|[.])?[-]([;]+|[aㅗ]|(zzZ))?", CharSetType.EMOTICON), 
+/*  56 */     new TokenPattern("[ㅡ](_|[.])?[ㅡ]([;]+|[aㅗ]|(zzZ))?", CharSetType.EMOTICON), 
+/*  58 */     new TokenPattern("[(][>]([.]|_)?[<][)]", CharSetType.EMOTICON), 
+/*  59 */     new TokenPattern("[>]([.]|_)?[<]", CharSetType.EMOTICON), 
+/*  60 */     new TokenPattern("[(][>]([.]|_)?[>][)]", CharSetType.EMOTICON), 
+/*  61 */     new TokenPattern("[>]([.]|_)?[>]", CharSetType.EMOTICON), 
+/*  62 */     new TokenPattern("[(][¬]([.]|_)?[¬][)]", CharSetType.EMOTICON), 
+/*  63 */     new TokenPattern("[¬]([.]|_)?[¬]", CharSetType.EMOTICON), 
+/*  66 */     new TokenPattern("[(]'(_|[.])\\^[)]", CharSetType.EMOTICON), 
+/*  67 */     new TokenPattern("'(_|[.])\\^", CharSetType.EMOTICON), 
+/*  68 */     new TokenPattern("\\^(_|[.])[~]", CharSetType.EMOTICON), 
+/*  69 */     new TokenPattern("[~](_|[.])\\^", CharSetType.EMOTICON), 
+/*  72 */     new TokenPattern("[(][.][_][.][)]", CharSetType.EMOTICON), 
+/*  73 */     new TokenPattern("[(]['][_]['][)]", CharSetType.EMOTICON), 
+/*  74 */     new TokenPattern("[(][,][_][,][)]", CharSetType.EMOTICON), 
+/*  75 */     new TokenPattern("[(][X][_][X][)]", CharSetType.EMOTICON), 
+/*  76 */     new TokenPattern("[O][_.][o]", CharSetType.EMOTICON), 
+/*  77 */     new TokenPattern("[o][_.][O]", CharSetType.EMOTICON), 
+/*  79 */     new TokenPattern("m[(]_ _[)]m", CharSetType.EMOTICON) };
+/*     */ 
+/*     */   public static List<Token> tokenize(String string)
+/*     */   {
+/*  84 */     if (!Util.valid(string)) return null;
+/*  85 */     ArrayList tkList = new ArrayList();
+/*     */ 
+/*  87 */     StringBuffer sb = new StringBuffer(string);
+/*     */ 
+/*  89 */     int i = 0; for (int ptnlen = PREDEFINED_TOKEN_PATTERN.length; i < ptnlen; i++) {
+/*  90 */       TokenPattern tkptn = PREDEFINED_TOKEN_PATTERN[i];
+/*  91 */       tkList.addAll(find(sb, tkptn));
+/*     */     }
+/*     */ 
+/*  94 */     int strlen = string.length();
+/*  95 */     boolean[] chkPrednfdPtn = checkFound(strlen, tkList);
+/*     */ 
+/*  98 */     char preCh = '\000'; char ch = '\000';
+/*  99 */     String temp = "";
+/* 100 */     CharSetType presentToken = CharSetType.ETC; CharSetType lastToken = CharSetType.ETC;
+/* 101 */     int tokenIndex = 0;
+/*     */ 
+/* 103 */     for (int i = 0; i < strlen; i++) {
+/* 104 */       ch = sb.charAt(i);
+/* 105 */       lastToken = presentToken;
+/* 106 */       Character.UnicodeBlock ub = Character.UnicodeBlock.of(ch);
+/*     */ 
+/* 109 */       if (chkPrednfdPtn[i] != 0) {
+/* 110 */         presentToken = CharSetType.EMOTICON;
+/*     */       }
+/* 113 */       else if ((ub == Character.UnicodeBlock.HANGUL_SYLLABLES) || 
+/* 114 */         (ub == Character.UnicodeBlock.HANGUL_COMPATIBILITY_JAMO))
+/*     */       {
+/* 116 */         presentToken = CharSetType.HANGUL;
+/*     */       }
+/* 124 */       else if ((ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS) || 
+/* 125 */         (ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS))
+/*     */       {
+/* 127 */         presentToken = CharSetType.HANMUN;
+/* 128 */       } else if (((ch >= 'A') && (ch <= 'Z')) || ((ch >= 'a') && (ch <= 'z')))
+/* 129 */         presentToken = CharSetType.ENGLISH;
+/* 130 */       else if ((ch >= '0') && (ch <= '9'))
+/* 131 */         presentToken = CharSetType.NUMBER;
+/* 132 */       else if ((ch == ' ') || (ch == '\t') || (ch == '\r') || (ch == '\n'))
+/* 133 */         presentToken = CharSetType.SPACE;
+/* 134 */       else if ((ub == Character.UnicodeBlock.LETTERLIKE_SYMBOLS) || 
+/* 135 */         (ub == Character.UnicodeBlock.CJK_COMPATIBILITY) || 
+/* 136 */         (ub == Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION) || 
+/* 137 */         (ub == Character.UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS) || 
+/* 138 */         (ub == Character.UnicodeBlock.BASIC_LATIN))
+/*     */       {
+/* 140 */         presentToken = CharSetType.SYMBOL;
+/*     */       }
+/* 142 */       else presentToken = CharSetType.ETC;
+/*     */ 
+/* 145 */       if ((i != 0) && (
+/* 146 */         (lastToken != presentToken) || 
+/* 147 */         ((presentToken == CharSetType.ETC) && ((temp.length() <= 0) || (temp.charAt(temp.length() - 1) != ch))) || (
+/* 148 */         (presentToken == CharSetType.SYMBOL) && (preCh != ch))))
+/*     */       {
+/* 151 */         if (lastToken != CharSetType.EMOTICON) tkList.add(new Token(temp, lastToken, tokenIndex));
+/*     */ 
+/* 153 */         tokenIndex = i;
+/* 154 */         temp = "";
+/*     */       }
+/* 156 */       temp = temp + ch;
+/* 157 */       preCh = ch;
+/*     */     }
+/*     */ 
+/* 161 */     if (Util.valid(temp)) tkList.add(new Token(temp, presentToken, tokenIndex));
+/*     */ 
+/* 163 */     Collections.sort(tkList);
+/*     */ 
+/* 165 */     return tkList;
+/*     */   }
+/*     */ 
+/*     */   private static List<Token> find(StringBuffer sb, TokenPattern tkptn)
+/*     */   {
+/* 182 */     if (tkptn == null) return null;
+/* 183 */     ArrayList tkList = new ArrayList();
+/*     */ 
+/* 185 */     Matcher matcher = tkptn.pattern.matcher(sb);
+/*     */     int i;
+/* 186 */     for (; matcher.find(); 
+/* 188 */       i < matcher.end())
+/*     */     {
+/* 187 */       tkList.add(new Token(sb.substring(matcher.start(), matcher.end()), tkptn.charSetType, matcher.start()));
+/* 188 */       i = matcher.start(); continue;
+/* 189 */       sb.setCharAt(i, ' ');
+/*     */ 
+/* 188 */       i++;
+/*     */     }
+/*     */ 
+/* 192 */     return tkList;
+/*     */   }
+/*     */ 
+/*     */   private static boolean[] checkFound(int strlen, List<Token> tkList)
+/*     */   {
+/* 208 */     boolean[] bFound = new boolean[strlen];
+/* 209 */     for (int i = 0; i < strlen; i++) {
+/* 210 */       bFound[i] = false;
+/*     */     }
+/* 212 */     int i = 0; for (int size = tkList == null ? 0 : tkList.size(); i < size; i++) {
+/* 213 */       Token tk = (Token)tkList.get(i);
+/* 214 */       int j = 0; for (int jsize = tk.string.length(); j < jsize; j++) {
+/* 215 */         bFound[(tk.index + j)] = true;
+/*     */       }
+/*     */     }
+/* 218 */     return bFound;
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.ma.Tokenizer
+ * JD-Core Version:    0.6.1
+ */

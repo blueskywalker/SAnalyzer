@@ -1,0 +1,462 @@
+/*     */ package org.snu.ids.ha.constants;
+/*     */ 
+/*     */ import java.io.PrintStream;
+/*     */ import java.util.ArrayList;
+/*     */ import java.util.Hashtable;
+/*     */ import java.util.List;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public class POSTag
+/*     */ {
+/*  47 */   private static final String[] TAG_ARR = { 
+/*  49 */     "NNG", 
+/*  50 */     "NNP", 
+/*  51 */     "NNB", 
+/*  52 */     "NNM", 
+/*  53 */     "NR", 
+/*  54 */     "NP", 
+/*  56 */     "VV", 
+/*  57 */     "VA", 
+/*  58 */     "VXV", 
+/*  59 */     "VXA", 
+/*  60 */     "VCP", 
+/*  61 */     "VCN", 
+/*  63 */     "MDN", 
+/*  64 */     "MDT", 
+/*  66 */     "MAG", 
+/*  67 */     "MAC", 
+/*  69 */     "IC", 
+/*  71 */     "JKS", 
+/*  72 */     "JKC", 
+/*  73 */     "JKG", 
+/*  74 */     "JKO", 
+/*  75 */     "JKM", 
+/*  76 */     "JKI", 
+/*  77 */     "JKQ", 
+/*  78 */     "JX", 
+/*  79 */     "JC", 
+/*  81 */     "EPH", 
+/*  82 */     "EPT", 
+/*  83 */     "EPP", 
+/*  84 */     "EFN", 
+/*  85 */     "EFQ", 
+/*  86 */     "EFO", 
+/*  87 */     "EFA", 
+/*  88 */     "EFI", 
+/*  89 */     "EFR", 
+/*  90 */     "ECE", 
+/*  91 */     "ECD", 
+/*  92 */     "ECS", 
+/*  93 */     "ETN", 
+/*  94 */     "ETD", 
+/*  96 */     "XPN", 
+/*  97 */     "XPV", 
+/*  99 */     "XSN", 
+/* 100 */     "XSV", 
+/* 101 */     "XSA", 
+/* 102 */     "XSM", 
+/* 103 */     "XSO", 
+/* 104 */     "XR", 
+/* 106 */     "SY", 
+/* 107 */     "SF", 
+/* 108 */     "SP", 
+/* 109 */     "SS", 
+/* 110 */     "SE", 
+/* 111 */     "SO", 
+/* 112 */     "SW", 
+/* 114 */     "UN", 
+/* 115 */     "UV", 
+/* 116 */     "UE", 
+/* 118 */     "OL", 
+/* 119 */     "OH", 
+/* 120 */     "ON", 
+/* 121 */     "BOS", 
+/* 122 */     "EMO" };
+/*     */ 
+/* 125 */   private static final Hashtable<String, Long> TAG_HASH = new Hashtable();
+/* 126 */   private static final Hashtable<Long, String> TAG_NUM_HASH = new Hashtable();
+/*     */   public static final long NNG;
+/*     */   public static final long NNP;
+/*     */   public static final long NNB;
+/*     */   public static final long NNM;
+/*     */   public static final long NR;
+/*     */   public static final long NP;
+/*     */   public static final long VV;
+/*     */   public static final long VA;
+/*     */   public static final long VXV;
+/*     */   public static final long VXA;
+/*     */   public static final long VCP;
+/*     */   public static final long VCN;
+/*     */   public static final long MDT;
+/*     */   public static final long MDN;
+/*     */   public static final long MAG;
+/*     */   public static final long MAC;
+/*     */   public static final long IC;
+/*     */   public static final long JKS;
+/*     */   public static final long JKC;
+/*     */   public static final long JKG;
+/*     */   public static final long JKO;
+/*     */   public static final long JKM;
+/*     */   public static final long JKI;
+/*     */   public static final long JKQ;
+/*     */   public static final long JX;
+/*     */   public static final long JC;
+/*     */   public static final long EPH;
+/*     */   public static final long EPT;
+/*     */   public static final long EPP;
+/*     */   public static final long EFN;
+/*     */   public static final long EFQ;
+/*     */   public static final long EFO;
+/*     */   public static final long EFA;
+/*     */   public static final long EFI;
+/*     */   public static final long EFR;
+/*     */   public static final long ECE;
+/*     */   public static final long ECD;
+/*     */   public static final long ECS;
+/*     */   public static final long ETN;
+/*     */   public static final long ETD;
+/*     */   public static final long XPN;
+/*     */   public static final long XPV;
+/*     */   public static final long XSN;
+/*     */   public static final long XSV;
+/*     */   public static final long XSA;
+/*     */   public static final long XSM;
+/*     */   public static final long XSO;
+/*     */   public static final long XR;
+/*     */   public static final long SF;
+/*     */   public static final long SP;
+/*     */   public static final long SS;
+/*     */   public static final long SE;
+/*     */   public static final long SO;
+/*     */   public static final long SW;
+/*     */   public static final long UN;
+/*     */   public static final long UV;
+/*     */   public static final long UE;
+/*     */   public static final long OL;
+/*     */   public static final long OH;
+/*     */   public static final long ON;
+/*     */   public static final long BOS;
+/*     */   public static final long EMO;
+/*     */   public static final long NNA;
+/*     */   public static final long NN;
+/*     */   public static final long N;
+/*     */   public static final long VX;
+/*     */   public static final long VP;
+/*     */   public static final long VC;
+/*     */   public static final long V;
+/*     */   public static final long MD;
+/*     */   public static final long MA;
+/*     */   public static final long M;
+/*     */   public static final long JK;
+/*     */   public static final long J;
+/*     */   public static final long EP;
+/*     */   public static final long EF;
+/*     */   public static final long EC;
+/*     */   public static final long ET;
+/*     */   public static final long EM;
+/*     */   public static final long E;
+/*     */   public static final long XP;
+/*     */   public static final long XS;
+/*     */   public static final long O;
+/*     */   public static final long S;
+/*     */   static final long MASK_ALL = -1L;
+/* 412 */   static final String[] ZIP_TAG_ARR = { 
+/* 413 */     "N", 
+/* 414 */     "NN", 
+/* 415 */     "NNA", 
+/* 416 */     "V", 
+/* 417 */     "VP", 
+/* 418 */     "VC", 
+/* 419 */     "VX", 
+/* 420 */     "M", 
+/* 421 */     "MD", 
+/* 422 */     "MA", 
+/* 423 */     "J", 
+/* 424 */     "JK", 
+/* 425 */     "E", 
+/* 426 */     "EM", 
+/* 427 */     "EP", 
+/* 428 */     "EF", 
+/* 429 */     "EC", 
+/* 430 */     "ET", 
+/* 431 */     "XS", 
+/* 432 */     "S" };
+/*     */ 
+/* 434 */   static final int ZIP_TAG_ARR_LEN = ZIP_TAG_ARR.length;
+/*     */   public static final long COMPOSED = -9223372036854775808L;
+/*     */   public static final long MASK_TAG = 9223372036854775807L;
+/*     */ 
+/*     */   static
+/*     */   {
+/* 128 */     long hgFuncNum = 0L;
+/* 129 */     int i = 0; for (int stop = TAG_ARR.length; i < stop; i++) {
+/* 130 */       hgFuncNum = 1L << i;
+/* 131 */       TAG_HASH.put(TAG_ARR[i], new Long(hgFuncNum));
+/* 132 */       TAG_NUM_HASH.put(new Long(hgFuncNum), TAG_ARR[i]);
+/*     */     }
+/*     */ 
+/* 175 */     NNG = getTagNum("NNG");
+/* 176 */     NNP = getTagNum("NNP");
+/* 177 */     NNB = getTagNum("NNB");
+/* 178 */     NNM = getTagNum("NNM");
+/* 179 */     NR = getTagNum("NR");
+/* 180 */     NP = getTagNum("NP");
+/* 181 */     VV = getTagNum("VV");
+/* 182 */     VA = getTagNum("VA");
+/* 183 */     VXV = getTagNum("VXV");
+/* 184 */     VXA = getTagNum("VXA");
+/* 185 */     VCP = getTagNum("VCP");
+/* 186 */     VCN = getTagNum("VCN");
+/* 187 */     MDT = getTagNum("MDT");
+/* 188 */     MDN = getTagNum("MDN");
+/* 189 */     MAG = getTagNum("MAG");
+/* 190 */     MAC = getTagNum("MAC");
+/* 191 */     IC = getTagNum("IC");
+/* 192 */     JKS = getTagNum("JKS");
+/* 193 */     JKC = getTagNum("JKC");
+/* 194 */     JKG = getTagNum("JKG");
+/* 195 */     JKO = getTagNum("JKO");
+/* 196 */     JKM = getTagNum("JKM");
+/* 197 */     JKI = getTagNum("JKI");
+/* 198 */     JKQ = getTagNum("JKQ");
+/* 199 */     JX = getTagNum("JX");
+/* 200 */     JC = getTagNum("JC");
+/* 201 */     EPH = getTagNum("EPH");
+/* 202 */     EPT = getTagNum("EPT");
+/* 203 */     EPP = getTagNum("EPP");
+/* 204 */     EFN = getTagNum("EFN");
+/* 205 */     EFQ = getTagNum("EFQ");
+/* 206 */     EFO = getTagNum("EFO");
+/* 207 */     EFA = getTagNum("EFA");
+/* 208 */     EFI = getTagNum("EFI");
+/* 209 */     EFR = getTagNum("EFR");
+/* 210 */     ECE = getTagNum("ECE");
+/* 211 */     ECD = getTagNum("ECD");
+/* 212 */     ECS = getTagNum("ECS");
+/* 213 */     ETN = getTagNum("ETN");
+/* 214 */     ETD = getTagNum("ETD");
+/* 215 */     XPN = getTagNum("XPN");
+/* 216 */     XPV = getTagNum("XPV");
+/* 217 */     XSN = getTagNum("XSN");
+/* 218 */     XSV = getTagNum("XSV");
+/* 219 */     XSA = getTagNum("XSA");
+/* 220 */     XSM = getTagNum("XSM");
+/* 221 */     XSO = getTagNum("XSO");
+/* 222 */     XR = getTagNum("XR");
+/* 223 */     SF = getTagNum("SF");
+/* 224 */     SP = getTagNum("SP");
+/* 225 */     SS = getTagNum("SS");
+/* 226 */     SE = getTagNum("SE");
+/* 227 */     SO = getTagNum("SO");
+/* 228 */     SW = getTagNum("SW");
+/* 229 */     UN = getTagNum("UN");
+/* 230 */     UV = getTagNum("UV");
+/* 231 */     UE = getTagNum("UE");
+/* 232 */     OL = getTagNum("OL");
+/* 233 */     OH = getTagNum("OH");
+/* 234 */     ON = getTagNum("ON");
+/* 235 */     BOS = getTagNum("BOS");
+/* 236 */     EMO = getTagNum("EMO");
+/*     */ 
+/* 239 */     NNA = NNG | NNP;
+/*     */ 
+/* 242 */     NN = NNA | NNB | NNM | NR | UN | ON;
+/*     */ 
+/* 244 */     N = NP | NN;
+/*     */ 
+/* 246 */     VX = VXV | VXA;
+/*     */ 
+/* 248 */     VP = VV | VA | VX | VCN | XSV | XSA;
+/*     */ 
+/* 250 */     VC = VCN | VCP;
+/*     */ 
+/* 252 */     V = VP | VCP;
+/*     */ 
+/* 254 */     MD = MDN | MDT;
+/*     */ 
+/* 256 */     MA = MAG | MAC;
+/*     */ 
+/* 258 */     M = MD | MA;
+/*     */ 
+/* 260 */     JK = JKS | JKC | JKG | JKO | JKM | JKI | JKQ;
+/*     */ 
+/* 262 */     J = JK | JX | JC;
+/*     */ 
+/* 264 */     EP = EPH | EPT | EPP;
+/*     */ 
+/* 267 */     EF = EFN | EFQ | EFO | EFA | EFI | EFR;
+/*     */ 
+/* 269 */     EC = ECE | ECD | ECS;
+/*     */ 
+/* 271 */     ET = ETN | ETD;
+/*     */ 
+/* 273 */     EM = EF | EC | ET;
+/*     */ 
+/* 275 */     E = EP | EM;
+/*     */ 
+/* 277 */     XP = XPN | XPV;
+/*     */ 
+/* 279 */     XS = XSN | XSV | XSA | XSM | XSO;
+/*     */ 
+/* 281 */     O = OL | OH;
+/*     */ 
+/* 283 */     S = SF | SP | SS | SE | SO | SW;
+/*     */ 
+/* 286 */     TAG_HASH.put("E", Long.valueOf(E));
+/* 287 */     TAG_HASH.put("EC", Long.valueOf(EC));
+/* 288 */     TAG_HASH.put("EF", Long.valueOf(EF));
+/* 289 */     TAG_HASH.put("EM", Long.valueOf(EM));
+/* 290 */     TAG_HASH.put("EP", Long.valueOf(EP));
+/* 291 */     TAG_HASH.put("ET", Long.valueOf(ET));
+/* 292 */     TAG_HASH.put("J", Long.valueOf(J));
+/* 293 */     TAG_HASH.put("JK", Long.valueOf(JK));
+/* 294 */     TAG_HASH.put("M", Long.valueOf(M));
+/* 295 */     TAG_HASH.put("MA", Long.valueOf(MA));
+/* 296 */     TAG_HASH.put("MD", Long.valueOf(MD));
+/* 297 */     TAG_HASH.put("N", Long.valueOf(N));
+/* 298 */     TAG_HASH.put("NN", Long.valueOf(NN));
+/* 299 */     TAG_HASH.put("NNA", Long.valueOf(NNA));
+/* 300 */     TAG_HASH.put("S", Long.valueOf(S));
+/* 301 */     TAG_HASH.put("V", Long.valueOf(V));
+/* 302 */     TAG_HASH.put("VC", Long.valueOf(VC));
+/* 303 */     TAG_HASH.put("VP", Long.valueOf(VP));
+/* 304 */     TAG_HASH.put("VX", Long.valueOf(VX));
+/* 305 */     TAG_HASH.put("XP", Long.valueOf(XP));
+/* 306 */     TAG_HASH.put("XS", Long.valueOf(XS));
+/* 307 */     TAG_HASH.put("O", Long.valueOf(O));
+/* 308 */     TAG_NUM_HASH.put(Long.valueOf(E), "E");
+/* 309 */     TAG_NUM_HASH.put(Long.valueOf(EC), "EC");
+/* 310 */     TAG_NUM_HASH.put(Long.valueOf(EF), "EF");
+/* 311 */     TAG_NUM_HASH.put(Long.valueOf(EM), "EM");
+/* 312 */     TAG_NUM_HASH.put(Long.valueOf(EP), "EP");
+/* 313 */     TAG_NUM_HASH.put(Long.valueOf(ET), "ET");
+/* 314 */     TAG_NUM_HASH.put(Long.valueOf(J), "J");
+/* 315 */     TAG_NUM_HASH.put(Long.valueOf(JK), "JK");
+/* 316 */     TAG_NUM_HASH.put(Long.valueOf(M), "M");
+/* 317 */     TAG_NUM_HASH.put(Long.valueOf(MA), "MA");
+/* 318 */     TAG_NUM_HASH.put(Long.valueOf(MD), "MD");
+/* 319 */     TAG_NUM_HASH.put(Long.valueOf(N), "N");
+/* 320 */     TAG_NUM_HASH.put(Long.valueOf(NN), "NN");
+/* 321 */     TAG_NUM_HASH.put(Long.valueOf(NNA), "NNA");
+/* 322 */     TAG_NUM_HASH.put(Long.valueOf(S), "S");
+/* 323 */     TAG_NUM_HASH.put(Long.valueOf(V), "V");
+/* 324 */     TAG_NUM_HASH.put(Long.valueOf(VX), "VX");
+/* 325 */     TAG_NUM_HASH.put(Long.valueOf(VP), "VP");
+/* 326 */     TAG_NUM_HASH.put(Long.valueOf(XP), "XP");
+/* 327 */     TAG_NUM_HASH.put(Long.valueOf(XS), "XS");
+/* 328 */     TAG_NUM_HASH.put(Long.valueOf(O), "O");
+/*     */   }
+/*     */ 
+/*     */   private static final long getTagNum(int i)
+/*     */   {
+/* 148 */     return 1L << i;
+/*     */   }
+/*     */ 
+/*     */   public static long getTagNum(String tag)
+/*     */   {
+/* 163 */     if (tag == null) return 0L;
+/* 164 */     if (tag.indexOf(',') > -1) return getTagNum(tag.split(","));
+/* 165 */     long l = 0L;
+/*     */     try {
+/* 167 */       l = ((Long)TAG_HASH.get(tag)).longValue();
+/*     */     } catch (Exception e) {
+/* 169 */       System.err.println("[" + tag + "] 정의되지 않은 태그입니다.");
+/*     */     }
+/* 171 */     return l;
+/*     */   }
+/*     */ 
+/*     */   public static long getTagNum(String[] tagArr)
+/*     */   {
+/* 343 */     long l = 0L;
+/* 344 */     int i = 0; for (int stop = tagArr == null ? 0 : tagArr.length; i < stop; i++) {
+/* 345 */       l |= getTagNum(tagArr[i]);
+/*     */     }
+/* 347 */     return l;
+/*     */   }
+/*     */ 
+/*     */   public static String getTag(long tagNum)
+/*     */   {
+/* 362 */     if (tagNum == 0L) return null;
+/* 363 */     String tag = (String)TAG_NUM_HASH.get(Long.valueOf(tagNum));
+/* 364 */     if (tag == null) tag = getTagStr(tagNum);
+/* 365 */     return tag;
+/*     */   }
+/*     */ 
+/*     */   public static List<String> getTagList(long encTagNum)
+/*     */   {
+/* 380 */     List ret = new ArrayList();
+/* 381 */     int i = 0; for (int stop = TAG_ARR.length; i < stop; i++) {
+/* 382 */       if ((encTagNum & getTagNum(i)) > 0L)
+/* 383 */         ret.add(TAG_ARR[i]);
+/*     */     }
+/* 385 */     return ret;
+/*     */   }
+/*     */ 
+/*     */   public static String getTagStr(long encTagNum)
+/*     */   {
+/* 400 */     StringBuffer sb = new StringBuffer();
+/* 401 */     int i = 0; for (int stop = TAG_ARR.length; i < stop; i++) {
+/* 402 */       if ((encTagNum & getTagNum(i)) > 0L) {
+/* 403 */         if (sb.length() > 0) sb.append(",");
+/* 404 */         sb.append(TAG_ARR[i]);
+/*     */       }
+/*     */     }
+/* 407 */     return sb.length() == 0 ? null : sb.toString();
+/*     */   }
+/*     */ 
+/*     */   public static String getZipTagStr(long encTagNum)
+/*     */   {
+/* 448 */     StringBuffer sb = new StringBuffer();
+/*     */ 
+/* 450 */     int zipTagCnt = 0;
+/* 451 */     long zipTagEnc = 0L;
+/* 452 */     for (int i = 0; i < ZIP_TAG_ARR_LEN; i++) {
+/* 453 */       zipTagEnc = getTagNum(ZIP_TAG_ARR[i]);
+/* 454 */       if ((encTagNum & zipTagEnc) == zipTagEnc) {
+/* 455 */         if (zipTagCnt > 0) sb.append(",");
+/* 456 */         sb.append(ZIP_TAG_ARR[i]);
+/* 457 */         zipTagCnt++;
+/* 458 */         encTagNum &= (0xFFFFFFFF ^ zipTagEnc);
+/*     */       }
+/*     */     }
+/*     */ 
+/* 462 */     String temp = getTagStr(encTagNum);
+/*     */ 
+/* 464 */     if (Util.valid(temp)) {
+/* 465 */       if (zipTagCnt > 0) sb.append(",");
+/* 466 */       sb.append(temp);
+/*     */     }
+/* 468 */     temp = sb.toString();
+/* 469 */     return Util.valid(temp) ? temp : null;
+/*     */   }
+/*     */ 
+/*     */   public static final long encode(String hgTag, String compType)
+/*     */   {
+/* 489 */     long enc = getTagNum(hgTag);
+/* 490 */     if ((Util.valid(compType)) && (compType.equals("C"))) enc |= -9223372036854775808L;
+/* 491 */     return enc;
+/*     */   }
+/*     */ 
+/*     */   public static final String[] decode(long hgEnc)
+/*     */   {
+/* 506 */     String[] ret = new String[2];
+/* 507 */     ret[0] = getTag(hgEnc & 0xFFFFFFFF);
+/* 508 */     ret[1] = ((hgEnc & 0x0) == -9223372036854775808L ? "C" : "S");
+/* 509 */     return ret;
+/*     */   }
+/*     */ 
+/*     */   public static boolean isTagOf(String tag, long tagsEnc)
+/*     */   {
+/* 525 */     return isTagOf(getTagNum(tag), tagsEnc);
+/*     */   }
+/*     */ 
+/*     */   public static boolean isTagOf(long tagNum, long tagsEnc)
+/*     */   {
+/* 531 */     return Long.bitCount(tagNum & tagsEnc) > 0;
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.constants.POSTag
+ * JD-Core Version:    0.6.1
+ */

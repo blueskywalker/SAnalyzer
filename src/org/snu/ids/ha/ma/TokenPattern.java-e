@@ -1,0 +1,20 @@
+/*     */ package org.snu.ids.ha.ma;
+/*     */ 
+/*     */ import java.util.regex.Pattern;
+/*     */ 
+/*     */ class TokenPattern
+/*     */ {
+/* 224 */   Pattern pattern = null;
+/* 225 */   CharSetType charSetType = null;
+/*     */ 
+/*     */   TokenPattern(String strPattern, CharSetType charSetType)
+/*     */   {
+/* 230 */     this.pattern = Pattern.compile(strPattern);
+/* 231 */     this.charSetType = charSetType;
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.ma.TokenPattern
+ * JD-Core Version:    0.6.1
+ */

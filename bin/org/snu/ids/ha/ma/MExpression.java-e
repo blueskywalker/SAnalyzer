@@ -1,0 +1,426 @@
+/*     */ package org.snu.ids.ha.ma;
+/*     */ 
+/*     */ import java.util.ArrayList;
+/*     */ import java.util.Collections;
+/*     */ import java.util.Comparator;
+/*     */ import java.util.List;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public class MExpression extends ArrayList<MCandidate>
+/*     */   implements Comparable<MExpression>
+/*     */ {
+/*  36 */   String exp = null;
+/*  37 */   float lnprOfSpacing = 0.0F;
+/*     */   private static final int PRUNE_SIZE = 12;
+/*     */ 
+/*     */   MExpression(String exp)
+/*     */   {
+/*  51 */     this.exp = exp;
+/*     */   }
+/*     */ 
+/*     */   public MExpression(String exp, MCandidate mc)
+/*     */     throws Exception
+/*     */   {
+/*  68 */     this(exp);
+/*  69 */     add(mc);
+/*     */   }
+/*     */ 
+/*     */   MExpression(MCandidate mc)
+/*     */     throws Exception
+/*     */   {
+/*  85 */     this(mc.getExp());
+/*  86 */     add(mc);
+/*     */   }
+/*     */ 
+/*     */   public boolean add(MCandidate mc)
+/*     */   {
+/* 101 */     if ((mc != null) && (!contains(mc)))
+/*     */     {
+/* 107 */       return super.add(mc);
+/*     */     }
+/* 109 */     return false;
+/*     */   }
+/*     */ 
+/*     */   public boolean add2(MCandidate mc)
+/*     */   {
+/* 125 */     if ((mc != null) && (!contains(mc))) return super.add(mc);
+/* 126 */     return false;
+/*     */   }
+/*     */ 
+/*     */   public String getExp()
+/*     */   {
+/* 135 */     return this.exp;
+/*     */   }
+/*     */ 
+/*     */   void setIndex(int index)
+/*     */   {
+/* 149 */     int i = 0; for (int size = size(); i < size; i++)
+/* 150 */       ((MCandidate)get(i)).setIndex(index);
+/*     */   }
+/*     */ 
+/*     */   public String toString()
+/*     */   {
+/* 165 */     StringBuffer sb = new StringBuffer(this.exp + Util.LINE_SEPARATOR);
+/* 166 */     sb.append(String.format("\t %4s%4s%4s%4s%10s%10s%10s%10s", new Object[] { "rdl", "cdl", "siz", "dic", "spacing", "tagging", "spacing!", "tagging!" }));
+/* 167 */     sb.append(Util.LINE_SEPARATOR);
+/*     */ 
+/* 169 */     int i = 0; for (int stop = size(); i < stop; i++) {
+/* 170 */       sb.append("\t{" + get(i) + "};" + Util.LINE_SEPARATOR);
+/*     */     }
+/* 172 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   public String toSmplStr()
+/*     */   {
+/* 178 */     StringBuffer sb = new StringBuffer(this.exp + Util.LINE_SEPARATOR);
+/* 179 */     int i = 0; for (int stop = size(); i < stop; i++) {
+/* 180 */       sb.append("\t{" + ((MCandidate)get(i)).toSimpleStr() + "};" + Util.LINE_SEPARATOR);
+/*     */     }
+/* 182 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   String getEncStr()
+/*     */   {
+/* 196 */     StringBuffer sb = new StringBuffer(this.exp + ":");
+/* 197 */     int i = 0; for (int stop = size(); i < stop; i++) {
+/* 198 */       if (i > 0) sb.append(";");
+/* 199 */       sb.append(((MCandidate)get(i)).getEncStr());
+/*     */     }
+/* 201 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   MExpression derive(MExpression meToAppend)
+/*     */   {
+/* 216 */     MExpression ret = new MExpression(this.exp + meToAppend.exp);
+/* 217 */     MCandidate mcThis = null; MCandidate mcToAppend = null;
+/* 218 */     int jStop = meToAppend.size();
+/* 219 */     int i = 0; for (int iStop = size(); i < iStop; i++) {
+/* 220 */       mcThis = (MCandidate)get(i);
+/* 221 */       for (int j = 0; j < jStop; j++) {
+/* 222 */         mcToAppend = (MCandidate)meToAppend.get(j);
+/* 223 */         ret.add(mcThis.derive(mcToAppend));
+/*     */       }
+/*     */     }
+/* 226 */     ret.prune();
+/* 227 */     return ret;
+/*     */   }
+/*     */ 
+/*     */   void prune()
+/*     */   {
+/* 244 */     int size = size();
+/* 245 */     if (size < 2) return;
+/*     */ 
+/* 247 */     int maxDicLen = -1;
+/* 248 */     int expLen = this.exp.length(); int tempDicLen = 0;
+/*     */ 
+/* 251 */     sort();
+/* 252 */     MCandidate mcBest = (MCandidate)get(0);
+/*     */ 
+/* 255 */     float bestLnpr = mcBest.getLnpr();
+/*     */ 
+/* 258 */     boolean uncomplete = (mcBest.candDicLen > 0) || (expLen > mcBest.getDicLenWithCand());
+/*     */ 
+/* 262 */     if ((!uncomplete) && (size < 12)) {
+/* 263 */       return;
+/*     */     }
+/*     */ 
+/* 267 */     int pruneIdx = 1;
+/* 268 */     for (int stop = size(); pruneIdx < stop; ) {
+/* 269 */       MCandidate mcToPrune = (MCandidate)get(pruneIdx);
+/*     */ 
+/* 272 */       tempDicLen = mcToPrune.getDicLenWithCand();
+/*     */ 
+/* 276 */       if ((uncomplete) && (mcToPrune.getDicLenOnlyCand() == 0) && (pruneIdx < 12)) {
+/* 277 */         pruneIdx++;
+/*     */       }
+/*     */       else
+/*     */       {
+/* 282 */         if (mcToPrune.getLnpr() < bestLnpr - 5.0F) {
+/*     */           break;
+/*     */         }
+/* 285 */         if (tempDicLen < maxDicLen)
+/*     */         {
+/*     */           break;
+/*     */         }
+/* 289 */         pruneIdx++;
+/*     */       }
+/*     */     }
+/*     */ 
+/* 293 */     int i = pruneIdx; for (int stop = size(); i < stop; i++)
+/*     */     {
+/* 295 */       if ((uncomplete) && (i == stop - 1) && (((MCandidate)get(pruneIdx)).realDicLen == 0) && (((MCandidate)get(pruneIdx)).getExp().length() < 10)) break;
+/* 296 */       remove(pruneIdx);
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   void pruneWithPrev(MExpression mePrev)
+/*     */     throws Exception
+/*     */   {
+/* 313 */     if (mePrev == null) return;
+/* 314 */     int thisMESize = size(); int preMESize = mePrev.size();
+/* 315 */     if (preMESize == 0) return;
+/* 316 */     for (int i = 0; i < thisMESize; i++) {
+/* 317 */       MCandidate mcThis = (MCandidate)get(i);
+/* 318 */       mcThis.numOfApndblMC = 0;
+/* 319 */       for (int j = 0; j < preMESize; j++) {
+/* 320 */         MCandidate preMC = (MCandidate)mePrev.get(j);
+/*     */ 
+/* 323 */         if ((preMC.isApndblWithSpace(mcThis)) || (preMC.isApndbl(mcThis)))
+/*     */         {
+/*     */           MCandidate tmp82_80 = mcThis; tmp82_80.numOfApndblMC = (byte)(tmp82_80.numOfApndblMC + 1);
+/* 325 */           break;
+/*     */         }
+/*     */       }
+/* 328 */       if (mcThis.numOfApndblMC == 0) {
+/* 329 */         remove(i);
+/* 330 */         i--;
+/* 331 */         thisMESize--;
+/*     */       }
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   void pruneWithNext(MExpression nextME)
+/*     */     throws Exception
+/*     */   {
+/* 349 */     int thisMESize = size(); int nextMESize = nextME.size();
+/* 350 */     if (nextMESize == 0) return;
+/* 351 */     for (int i = 0; i < thisMESize; i++) {
+/* 352 */       MCandidate thisMC = (MCandidate)get(i);
+/* 353 */       thisMC.numOfApndblMC = 0;
+/* 354 */       for (int j = 0; j < nextMESize; j++) {
+/* 355 */         MCandidate nextMC = (MCandidate)nextME.get(j);
+/*     */ 
+/* 358 */         if (thisMC.isApndblWithSpace(nextMC))
+/*     */         {
+/*     */           MCandidate tmp67_65 = thisMC; tmp67_65.numOfApndblMC = (byte)(tmp67_65.numOfApndblMC + 1);
+/* 360 */           break;
+/*     */         }
+/*     */       }
+/* 363 */       if ((thisMC.numOfApndblMC == 0) && (size() > 1)) {
+/* 364 */         remove(i);
+/* 365 */         i--;
+/* 366 */         thisMESize--;
+/*     */       }
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   MExpression[] divideHeadTailAt(String headStr, int headIndex, String tailStr, int tailIndex)
+/*     */     throws Exception
+/*     */   {
+/* 389 */     MExpression[] ret = new MExpression[2];
+/* 390 */     MExpression headME = ret[0] =  = new MExpression(headStr);
+/* 391 */     MExpression tailME = ret[1] =  = new MExpression(tailStr);
+/*     */ 
+/* 393 */     int j = 0; for (int stop = size(); j < stop; j++) {
+/* 394 */       MCandidate[] mcHeadTail = ((MCandidate)get(j)).divideHeadTailAt(headStr, headIndex, tailStr, tailIndex);
+/* 395 */       if (mcHeadTail != null) {
+/* 396 */         headME.add(mcHeadTail[0]);
+/* 397 */         tailME.add(mcHeadTail[1]);
+/*     */       }
+/*     */     }
+/* 400 */     return ret;
+/*     */   }
+/*     */ 
+/*     */   void merge(MExpression mExp)
+/*     */   {
+/* 414 */     int i = 0; for (int stop = mExp.size(); i < stop; i++) {
+/* 415 */       add((MCandidate)mExp.get(i));
+/*     */     }
+/* 417 */     prune();
+/*     */   }
+/*     */ 
+/*     */   List<MExpression> split()
+/*     */     throws Exception
+/*     */   {
+/* 433 */     if (size() == 0) return null;
+/* 434 */     ArrayList ret = new ArrayList();
+/*     */ 
+/* 437 */     MCandidate mc = (MCandidate)get(0);
+/* 438 */     List splitedMCList = mc.split();
+/* 439 */     int splitedMCSize = splitedMCList.size();
+/* 440 */     for (int i = 0; i < splitedMCSize; i++) {
+/* 441 */       ret.add(new MExpression((MCandidate)splitedMCList.get(i)));
+/*     */     }
+/*     */ 
+/* 444 */     int size = size();
+/*     */ 
+/* 447 */     if (size > 1) {
+/* 448 */       String preExpWithSpace = mc.geExpStrWithSpace();
+/* 449 */       for (int i = 1; i < size; i++) {
+/* 450 */         mc = (MCandidate)get(i);
+/*     */ 
+/* 452 */         String curExpWithSpace = mc.geExpStrWithSpace();
+/*     */ 
+/* 454 */         if (preExpWithSpace.equals(curExpWithSpace))
+/*     */         {
+/* 457 */           splitedMCList = mc.split();
+/* 458 */           for (int j = 0; j < splitedMCSize; j++) {
+/* 459 */             ((MExpression)ret.get(j)).add((MCandidate)splitedMCList.get(j));
+/*     */           }
+/*     */         }
+/*     */       }
+/*     */     }
+/* 464 */     return ret;
+/*     */   }
+/*     */ 
+/*     */   boolean isOneEojeol()
+/*     */   {
+/* 478 */     return (size() > 0) && (((MCandidate)get(0)).getSpaceCnt() == 0);
+/*     */   }
+/*     */ 
+/*     */   void sort()
+/*     */   {
+/* 491 */     Collections.sort(this);
+/*     */   }
+/*     */ 
+/*     */   void sortByLnpr()
+/*     */   {
+/* 497 */     Collections.sort(this, new Comparator()
+/*     */     {
+/*     */       public int compare(MCandidate mc1, MCandidate mc2)
+/*     */       {
+/* 501 */         if (mc1.getLnpr() > mc2.getLnpr())
+/* 502 */           return -1;
+/* 503 */         if (mc1.getLnpr() < mc2.getLnpr()) {
+/* 504 */           return 1;
+/*     */         }
+/* 506 */         return 0;
+/*     */       }
+/*     */     });
+/*     */   }
+/*     */ 
+/*     */   void sortByBestLnpr()
+/*     */   {
+/* 514 */     Collections.sort(this, new Comparator()
+/*     */     {
+/*     */       public int compare(MCandidate mc1, MCandidate mc2)
+/*     */       {
+/* 518 */         if (mc1.getBestLnpr() > mc1.getBestLnpr())
+/* 519 */           return -1;
+/* 520 */         if (mc1.getBestLnpr() > mc1.getBestLnpr()) {
+/* 521 */           return 1;
+/*     */         }
+/* 523 */         return 0;
+/*     */       }
+/*     */     });
+/*     */   }
+/*     */ 
+/*     */   public int compareTo(MExpression comp)
+/*     */   {
+/* 539 */     return this.exp.compareTo(comp.exp);
+/*     */   }
+/*     */ 
+/*     */   String getCommonHead()
+/*     */   {
+/* 556 */     MCandidate mc = (MCandidate)get(0);
+/* 557 */     int spaceCnt = mc.getSpaceCnt();
+/* 558 */     if (spaceCnt < 1) return null;
+/*     */ 
+/* 560 */     int size = size();
+/* 561 */     for (int i = spaceCnt - 1; i >= 0; i--)
+/*     */     {
+/* 564 */       String maxCommonHead = mc.getExp(i);
+/*     */ 
+/* 567 */       if (getExp().length() - maxCommonHead.length() >= 2)
+/*     */       {
+/* 570 */         for (int j = 1; j < size; j++) {
+/* 571 */           if (((MCandidate)get(j)).getHead(maxCommonHead) == null) {
+/* 572 */             maxCommonHead = null;
+/* 573 */             break;
+/*     */           }
+/*     */ 
+/*     */         }
+/*     */ 
+/* 578 */         if ((maxCommonHead != null) && (maxCommonHead.length() > 1))
+/*     */         {
+/* 580 */           if (mc.isUNBfrOrAftrIthSpace(i)) {
+/* 581 */             maxCommonHead = null;
+/*     */           }
+/*     */           else
+/*     */           {
+/* 586 */             return maxCommonHead;
+/*     */           }
+/*     */         }
+/*     */       }
+/*     */     }
+/* 589 */     return null;
+/*     */   }
+/*     */ 
+/*     */   boolean isComplete()
+/*     */     throws Exception
+/*     */   {
+/* 604 */     return (size() > 0) && (((MCandidate)get(0)).isComplete());
+/*     */   }
+/*     */ 
+/*     */   boolean isOneEojeolCheckable()
+/*     */   {
+/* 618 */     if (size() == 1) {
+/* 619 */       MCandidate mc = (MCandidate)get(0);
+/* 620 */       Morpheme mp = mc.firstMorp;
+/* 621 */       if ((mc.size() == 1) && (
+/* 622 */         (mp.isCharSetOf(CharSetType.NUMBER)) || 
+/* 623 */         (mp.isCharSetOf(CharSetType.ENGLISH)) || 
+/* 624 */         (mp.isCharSetOf(CharSetType.COMBINED))))
+/*     */       {
+/* 626 */         return true;
+/*     */       }
+/*     */     }
+/* 629 */     return false;
+/*     */   }
+/*     */ 
+/*     */   public MExpression copy()
+/*     */   {
+/* 643 */     MExpression copy = new MExpression(this.exp);
+/* 644 */     int i = 0; for (int stop = size(); i < stop; i++) {
+/* 645 */       copy.add(((MCandidate)get(i)).copy());
+/*     */     }
+/* 647 */     return copy;
+/*     */   }
+/*     */ 
+/*     */   public void leaveJustBest()
+/*     */   {
+/* 660 */     for (int i = size() - 1; i > 0; i--)
+/* 661 */       remove(i);
+/*     */   }
+/*     */ 
+/*     */   public void setBestPrevMC(MExpression mePrev)
+/*     */   {
+/* 676 */     int i = 0; for (int size = size(); i < size; i++) {
+/* 677 */       MCandidate mcCur = (MCandidate)get(i);
+/*     */ 
+/* 679 */       if (mePrev == null) {
+/* 680 */         mcCur.setBestPrevMC(null);
+/*     */       } else {
+/* 682 */         int j = 0; for (int jSize = mePrev.size(); j < jSize; j++) {
+/* 683 */           MCandidate mcPrev = (MCandidate)mePrev.get(j);
+/* 684 */           mcCur.setBestPrevMC(mcPrev);
+/*     */         }
+/*     */       }
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   public boolean isNotHangul()
+/*     */   {
+/* 701 */     return (size() == 1) && (((MCandidate)get(0)).isNotHangul());
+/*     */   }
+/*     */ 
+/*     */   public MCandidate getBest()
+/*     */   {
+/* 707 */     return (MCandidate)get(0);
+/*     */   }
+/*     */ 
+/*     */   public float getLnprOfSpacing()
+/*     */   {
+/* 716 */     return this.lnprOfSpacing;
+/*     */   }
+/*     */ 
+/*     */   public void setLnprOfSpacing(float lnprOfSpacing)
+/*     */   {
+/* 725 */     this.lnprOfSpacing = lnprOfSpacing;
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.ma.MExpression
+ * JD-Core Version:    0.6.1
+ */

@@ -1,0 +1,120 @@
+/*     */ package org.snu.ids.ha.sp;
+/*     */ 
+/*     */ import java.util.ArrayList;
+/*     */ import java.util.Iterator;
+/*     */ import java.util.List;
+/*     */ import org.snu.ids.ha.ma.Eojeol;
+/*     */ import org.snu.ids.ha.ma.Morpheme;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public class ParseTreeNode
+/*     */ {
+/*  15 */   int id = 0;
+/*     */   private Eojeol eojeol;
+/*     */   private ParseTreeNode parentNode;
+/*     */   private List<ParseTreeEdge> childEdges;
+/*     */ 
+/*     */   protected ParseTreeNode(Eojeol eojeol)
+/*     */   {
+/*  23 */     this.eojeol = eojeol;
+/*     */   }
+/*     */ 
+/*     */   public List<ParseTreeEdge> getChildEdges()
+/*     */   {
+/*  29 */     return this.childEdges;
+/*     */   }
+/*     */ 
+/*     */   public void addChildEdge(ParseTreeEdge arc)
+/*     */   {
+/*  35 */     if (this.childEdges == null) this.childEdges = new ArrayList();
+/*  36 */     this.childEdges.add(arc);
+/*     */   }
+/*     */ 
+/*     */   public int getId()
+/*     */   {
+/*  45 */     return this.id;
+/*     */   }
+/*     */ 
+/*     */   public Eojeol getEojeol()
+/*     */   {
+/*  51 */     return this.eojeol;
+/*     */   }
+/*     */ 
+/*     */   public ParseTreeNode getParentNode()
+/*     */   {
+/*  60 */     return this.parentNode;
+/*     */   }
+/*     */ 
+/*     */   public void setParentNode(ParseTreeNode parentNode)
+/*     */   {
+/*  69 */     this.parentNode = parentNode;
+/*     */   }
+/*     */ 
+/*     */   public boolean contains(ParseTreeNode node)
+/*     */   {
+/*  84 */     if (this.eojeol == node.eojeol) return true;
+/*  85 */     for (Iterator iterChildEdge = this.childEdges.iterator(); iterChildEdge.hasNext(); ) {
+/*  86 */       ParseTreeEdge edge = (ParseTreeEdge)iterChildEdge.next();
+/*  87 */       ParseTreeNode child = edge.getChildNode();
+/*     */ 
+/*  89 */       if (child.contains(node)) {
+/*  90 */         return true;
+/*     */       }
+/*     */     }
+/*  93 */     return false;
+/*     */   }
+/*     */ 
+/*     */   public void traverse(int depth, String relation, StringBuffer sb)
+/*     */   {
+/*  99 */     for (int i = 0; i < depth; i++)
+/* 100 */       sb.append("\t");
+/* 101 */     if (relation != null) sb.append("<=[" + relation + "]=| ");
+/* 102 */     sb.append(this.id + "\t" + this.eojeol + "\n");
+/* 103 */     int i = 0; for (int size = this.childEdges == null ? 0 : this.childEdges.size(); i < size; i++) {
+/* 104 */       ParseTreeEdge edge = (ParseTreeEdge)this.childEdges.get(i);
+/* 105 */       edge.getChildNode().traverse(depth + 1, edge.getRelation(), sb);
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   public int traverse(int id)
+/*     */   {
+/* 121 */     this.id = id;
+/* 122 */     int ret = id;
+/* 123 */     int i = 0; for (int size = this.childEdges == null ? 0 : this.childEdges.size(); i < size; i++) {
+/* 124 */       ParseTreeEdge edge = (ParseTreeEdge)this.childEdges.get(i);
+/* 125 */       ret = edge.getChildNode().traverse(ret + 1);
+/*     */     }
+/* 127 */     return ret;
+/*     */   }
+/*     */ 
+/*     */   public void traverse(List<ParseTreeNode> nodeList, List<ParseTreeEdge> edgeList)
+/*     */   {
+/* 142 */     nodeList.add(this);
+/* 143 */     int i = 0; for (int size = this.childEdges == null ? 0 : this.childEdges.size(); i < size; i++) {
+/* 144 */       ParseTreeEdge edge = (ParseTreeEdge)this.childEdges.get(i);
+/* 145 */       edgeList.add(edge);
+/* 146 */       edge.getChildNode().traverse(nodeList, edgeList);
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   public String getExp()
+/*     */   {
+/* 161 */     return this.eojeol == null ? "ROOT" : this.eojeol.getExp();
+/*     */   }
+/*     */ 
+/*     */   public String getMorpXmlStr()
+/*     */   {
+/* 175 */     StringBuffer sb = new StringBuffer();
+/* 176 */     int i = 0; for (int size = this.eojeol == null ? 0 : this.eojeol.size(); i < size; i++) {
+/* 177 */       Morpheme morp = (Morpheme)this.eojeol.get(i);
+/* 178 */       if (i > 0) sb.append("+");
+/* 179 */       sb.append(Util.rplcXMLSpclChar(morp.getString()) + "/" + morp.getTag());
+/*     */     }
+/* 181 */     return sb.toString();
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.sp.ParseTreeNode
+ * JD-Core Version:    0.6.1
+ */

@@ -1,0 +1,42 @@
+/*     */ package org.snu.ids.ha.dic;
+/*     */ 
+/*     */ import java.io.BufferedReader;
+/*     */ import java.io.IOException;
+/*     */ import java.io.InputStreamReader;
+/*     */ import java.io.UnsupportedEncodingException;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ class ProbDicReader
+/*     */ {
+/* 336 */   private BufferedReader br = null;
+/* 337 */   String line = null;
+/*     */ 
+/*     */   ProbDicReader(String fileName)
+/*     */     throws UnsupportedEncodingException
+/*     */   {
+/* 344 */     this.br = new BufferedReader(new InputStreamReader(PDDictionary.class.getResourceAsStream(fileName), "UTF-8"));
+/*     */   }
+/*     */ 
+/*     */   public String[] read()
+/*     */     throws IOException
+/*     */   {
+/* 351 */     while ((this.line = this.br.readLine()) != null) {
+/* 352 */       this.line = this.line.trim();
+/* 353 */       if ((Util.valid(this.line)) && (!this.line.startsWith("//"))) {
+/* 354 */         return this.line.split("\t");
+/*     */       }
+/*     */     }
+/* 357 */     return null;
+/*     */   }
+/*     */ 
+/*     */   public void close()
+/*     */     throws IOException
+/*     */   {
+/* 364 */     if (this.br != null) this.br.close();
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.dic.ProbDicReader
+ * JD-Core Version:    0.6.1
+ */

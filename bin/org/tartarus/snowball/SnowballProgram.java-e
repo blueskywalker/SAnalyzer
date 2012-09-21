@@ -1,0 +1,394 @@
+/*     */ package org.tartarus.snowball;
+/*     */ 
+/*     */ import java.io.PrintStream;
+/*     */ import java.lang.reflect.InvocationTargetException;
+/*     */ import java.lang.reflect.Method;
+/*     */ 
+/*     */ public class SnowballProgram
+/*     */ {
+/*     */   protected StringBuffer current;
+/*     */   protected int cursor;
+/*     */   protected int limit;
+/*     */   protected int limit_backward;
+/*     */   protected int bra;
+/*     */   protected int ket;
+/*     */ 
+/*     */   protected SnowballProgram()
+/*     */   {
+/*  11 */     this.current = new StringBuffer();
+/*  12 */     setCurrent("");
+/*     */   }
+/*     */ 
+/*     */   public void setCurrent(String value)
+/*     */   {
+/*  21 */     this.current.replace(0, this.current.length(), value);
+/*  22 */     this.cursor = 0;
+/*  23 */     this.limit = this.current.length();
+/*  24 */     this.limit_backward = 0;
+/*  25 */     this.bra = this.cursor;
+/*  26 */     this.ket = this.limit;
+/*     */   }
+/*     */ 
+/*     */   public String getCurrent()
+/*     */   {
+/*  35 */     String result = this.current.toString();
+/*     */ 
+/*  42 */     this.current = new StringBuffer();
+/*  43 */     return result;
+/*     */   }
+/*     */ 
+/*     */   protected void copy_from(SnowballProgram other)
+/*     */   {
+/*  59 */     this.current = other.current;
+/*  60 */     this.cursor = other.cursor;
+/*  61 */     this.limit = other.limit;
+/*  62 */     this.limit_backward = other.limit_backward;
+/*  63 */     this.bra = other.bra;
+/*  64 */     this.ket = other.ket;
+/*     */   }
+/*     */ 
+/*     */   protected boolean in_grouping(char[] s, int min, int max)
+/*     */   {
+/*  70 */     if (this.cursor >= this.limit) return false;
+/*  71 */     char ch = this.current.charAt(this.cursor);
+/*  72 */     if ((ch > max) || (ch < min)) return false;
+/*  73 */     ch = (char)(ch - min);
+/*  74 */     if ((s[(ch >> '\003')] & '\001' << (ch & 0x7)) == 0) return false;
+/*  75 */     this.cursor += 1;
+/*  76 */     return true;
+/*     */   }
+/*     */ 
+/*     */   protected boolean in_grouping_b(char[] s, int min, int max)
+/*     */   {
+/*  82 */     if (this.cursor <= this.limit_backward) return false;
+/*  83 */     char ch = this.current.charAt(this.cursor - 1);
+/*  84 */     if ((ch > max) || (ch < min)) return false;
+/*  85 */     ch = (char)(ch - min);
+/*  86 */     if ((s[(ch >> '\003')] & '\001' << (ch & 0x7)) == 0) return false;
+/*  87 */     this.cursor -= 1;
+/*  88 */     return true;
+/*     */   }
+/*     */ 
+/*     */   protected boolean out_grouping(char[] s, int min, int max)
+/*     */   {
+/*  94 */     if (this.cursor >= this.limit) return false;
+/*  95 */     char ch = this.current.charAt(this.cursor);
+/*  96 */     if ((ch > max) || (ch < min)) {
+/*  97 */       this.cursor += 1;
+/*  98 */       return true;
+/*     */     }
+/* 100 */     ch = (char)(ch - min);
+/* 101 */     if ((s[(ch >> '\003')] & '\001' << (ch & 0x7)) == 0) {
+/* 102 */       this.cursor += 1;
+/* 103 */       return true;
+/*     */     }
+/* 105 */     return false;
+/*     */   }
+/*     */ 
+/*     */   protected boolean out_grouping_b(char[] s, int min, int max)
+/*     */   {
+/* 111 */     if (this.cursor <= this.limit_backward) return false;
+/* 112 */     char ch = this.current.charAt(this.cursor - 1);
+/* 113 */     if ((ch > max) || (ch < min)) {
+/* 114 */       this.cursor -= 1;
+/* 115 */       return true;
+/*     */     }
+/* 117 */     ch = (char)(ch - min);
+/* 118 */     if ((s[(ch >> '\003')] & '\001' << (ch & 0x7)) == 0) {
+/* 119 */       this.cursor -= 1;
+/* 120 */       return true;
+/*     */     }
+/* 122 */     return false;
+/*     */   }
+/*     */ 
+/*     */   protected boolean in_range(int min, int max)
+/*     */   {
+/* 128 */     if (this.cursor >= this.limit) return false;
+/* 129 */     char ch = this.current.charAt(this.cursor);
+/* 130 */     if ((ch > max) || (ch < min)) return false;
+/* 131 */     this.cursor += 1;
+/* 132 */     return true;
+/*     */   }
+/*     */ 
+/*     */   protected boolean in_range_b(int min, int max)
+/*     */   {
+/* 138 */     if (this.cursor <= this.limit_backward) return false;
+/* 139 */     char ch = this.current.charAt(this.cursor - 1);
+/* 140 */     if ((ch > max) || (ch < min)) return false;
+/* 141 */     this.cursor -= 1;
+/* 142 */     return true;
+/*     */   }
+/*     */ 
+/*     */   protected boolean out_range(int min, int max)
+/*     */   {
+/* 148 */     if (this.cursor >= this.limit) return false;
+/* 149 */     char ch = this.current.charAt(this.cursor);
+/* 150 */     if ((ch <= max) && (ch >= min)) return false;
+/* 151 */     this.cursor += 1;
+/* 152 */     return true;
+/*     */   }
+/*     */ 
+/*     */   protected boolean out_range_b(int min, int max)
+/*     */   {
+/* 158 */     if (this.cursor <= this.limit_backward) return false;
+/* 159 */     char ch = this.current.charAt(this.cursor - 1);
+/* 160 */     if ((ch <= max) && (ch >= min)) return false;
+/* 161 */     this.cursor -= 1;
+/* 162 */     return true;
+/*     */   }
+/*     */ 
+/*     */   protected boolean eq_s(int s_size, String s)
+/*     */   {
+/* 168 */     if (this.limit - this.cursor < s_size) return false;
+/*     */ 
+/* 170 */     for (int i = 0; i != s_size; i++) {
+/* 171 */       if (this.current.charAt(this.cursor + i) != s.charAt(i)) return false;
+/*     */     }
+/* 173 */     this.cursor += s_size;
+/* 174 */     return true;
+/*     */   }
+/*     */ 
+/*     */   protected boolean eq_s_b(int s_size, String s)
+/*     */   {
+/* 180 */     if (this.cursor - this.limit_backward < s_size) return false;
+/*     */ 
+/* 182 */     for (int i = 0; i != s_size; i++) {
+/* 183 */       if (this.current.charAt(this.cursor - s_size + i) != s.charAt(i)) return false;
+/*     */     }
+/* 185 */     this.cursor -= s_size;
+/* 186 */     return true;
+/*     */   }
+/*     */ 
+/*     */   protected boolean eq_v(CharSequence s)
+/*     */   {
+/* 192 */     return eq_s(s.length(), s.toString());
+/*     */   }
+/*     */ 
+/*     */   protected boolean eq_v_b(CharSequence s)
+/*     */   {
+/* 198 */     return eq_s_b(s.length(), s.toString());
+/*     */   }
+/*     */ 
+/*     */   protected int find_among(Among[] v, int v_size)
+/*     */   {
+/* 204 */     int i = 0;
+/* 205 */     int j = v_size;
+/*     */ 
+/* 207 */     int c = this.cursor;
+/* 208 */     int l = this.limit;
+/*     */ 
+/* 210 */     int common_i = 0;
+/* 211 */     int common_j = 0;
+/*     */ 
+/* 213 */     boolean first_key_inspected = false;
+/*     */     while (true)
+/*     */     {
+/* 216 */       int k = i + (j - i >> 1);
+/* 217 */       int diff = 0;
+/* 218 */       int common = common_i < common_j ? common_i : common_j;
+/* 219 */       Among w = v[k];
+/*     */ 
+/* 221 */       for (int i2 = common; i2 < w.s_size; i2++) {
+/* 222 */         if (c + common == l) {
+/* 223 */           diff = -1;
+/* 224 */           break;
+/*     */         }
+/* 226 */         diff = this.current.charAt(c + common) - w.s[i2];
+/* 227 */         if (diff != 0) break;
+/* 228 */         common++;
+/*     */       }
+/* 230 */       if (diff < 0) {
+/* 231 */         j = k;
+/* 232 */         common_j = common;
+/*     */       } else {
+/* 234 */         i = k;
+/* 235 */         common_i = common;
+/*     */       }
+/* 237 */       if (j - i <= 1) {
+/* 238 */         if ((i > 0) || 
+/* 239 */           (j == i))
+/*     */         {
+/*     */           break;
+/*     */         }
+/*     */ 
+/* 245 */         if (first_key_inspected) break;
+/* 246 */         first_key_inspected = true;
+/*     */       }
+/*     */     }
+/*     */     do {
+/* 250 */       Among w = v[i];
+/* 251 */       if (common_i >= w.s_size) {
+/* 252 */         this.cursor = (c + w.s_size);
+/* 253 */         if (w.method == null) return w.result; boolean res;
+/*     */         try
+/*     */         {
+/* 256 */           Object resobj = w.method.invoke(w.methodobject, new Object[0]);
+/* 257 */           res = resobj.toString().equals("true");
+/*     */         }
+/*     */         catch (InvocationTargetException e)
+/*     */         {
+/*     */           boolean res;
+/* 259 */           res = false;
+/*     */         }
+/*     */         catch (IllegalAccessException e)
+/*     */         {
+/*     */           boolean res;
+/* 262 */           res = false;
+/*     */         }
+/*     */ 
+/* 265 */         this.cursor = (c + w.s_size);
+/* 266 */         if (res) return w.result;
+/*     */       }
+/* 268 */       i = w.substring_i;
+/* 269 */     }while (i >= 0); return 0;
+/*     */   }
+/*     */ 
+/*     */   protected int find_among_b(Among[] v, int v_size)
+/*     */   {
+/* 277 */     int i = 0;
+/* 278 */     int j = v_size;
+/*     */ 
+/* 280 */     int c = this.cursor;
+/* 281 */     int lb = this.limit_backward;
+/*     */ 
+/* 283 */     int common_i = 0;
+/* 284 */     int common_j = 0;
+/*     */ 
+/* 286 */     boolean first_key_inspected = false;
+/*     */     while (true)
+/*     */     {
+/* 289 */       int k = i + (j - i >> 1);
+/* 290 */       int diff = 0;
+/* 291 */       int common = common_i < common_j ? common_i : common_j;
+/* 292 */       Among w = v[k];
+/*     */ 
+/* 294 */       for (int i2 = w.s_size - 1 - common; i2 >= 0; i2--) {
+/* 295 */         if (c - common == lb) {
+/* 296 */           diff = -1;
+/* 297 */           break;
+/*     */         }
+/* 299 */         diff = this.current.charAt(c - 1 - common) - w.s[i2];
+/* 300 */         if (diff != 0) break;
+/* 301 */         common++;
+/*     */       }
+/* 303 */       if (diff < 0) {
+/* 304 */         j = k;
+/* 305 */         common_j = common;
+/*     */       } else {
+/* 307 */         i = k;
+/* 308 */         common_i = common;
+/*     */       }
+/* 310 */       if (j - i <= 1) {
+/* 311 */         if ((i > 0) || 
+/* 312 */           (j == i) || 
+/* 313 */           (first_key_inspected)) break;
+/* 314 */         first_key_inspected = true;
+/*     */       }
+/*     */     }
+/*     */     do {
+/* 318 */       Among w = v[i];
+/* 319 */       if (common_i >= w.s_size) {
+/* 320 */         this.cursor = (c - w.s_size);
+/* 321 */         if (w.method == null) return w.result;
+/*     */         boolean res;
+/*     */         try
+/*     */         {
+/* 325 */           Object resobj = w.method.invoke(w.methodobject, new Object[0]);
+/* 326 */           res = resobj.toString().equals("true");
+/*     */         }
+/*     */         catch (InvocationTargetException e)
+/*     */         {
+/*     */           boolean res;
+/* 328 */           res = false;
+/*     */         }
+/*     */         catch (IllegalAccessException e)
+/*     */         {
+/*     */           boolean res;
+/* 331 */           res = false;
+/*     */         }
+/*     */ 
+/* 334 */         this.cursor = (c - w.s_size);
+/* 335 */         if (res) return w.result;
+/*     */       }
+/* 337 */       i = w.substring_i;
+/* 338 */     }while (i >= 0); return 0;
+/*     */   }
+/*     */ 
+/*     */   protected int replace_s(int c_bra, int c_ket, String s)
+/*     */   {
+/* 348 */     int adjustment = s.length() - (c_ket - c_bra);
+/* 349 */     this.current.replace(c_bra, c_ket, s);
+/* 350 */     this.limit += adjustment;
+/* 351 */     if (this.cursor >= c_ket)
+/* 352 */       this.cursor += adjustment;
+/* 353 */     else if (this.cursor > c_bra) this.cursor = c_bra;
+/* 354 */     return adjustment;
+/*     */   }
+/*     */ 
+/*     */   protected void slice_check()
+/*     */   {
+/* 360 */     if ((this.bra < 0) || (this.bra > this.ket) || (this.ket > this.limit) || (this.limit > this.current.length()))
+/*     */     {
+/* 362 */       System.err.println("faulty slice operation");
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   protected void slice_from(String s)
+/*     */   {
+/* 369 */     slice_check();
+/* 370 */     replace_s(this.bra, this.ket, s);
+/*     */   }
+/*     */ 
+/*     */   protected void slice_from(CharSequence s)
+/*     */   {
+/* 376 */     slice_from(s.toString());
+/*     */   }
+/*     */ 
+/*     */   protected void slice_del()
+/*     */   {
+/* 382 */     slice_from("");
+/*     */   }
+/*     */ 
+/*     */   protected void insert(int c_bra, int c_ket, String s)
+/*     */   {
+/* 388 */     int adjustment = replace_s(c_bra, c_ket, s);
+/* 389 */     if (c_bra <= this.bra) this.bra += adjustment;
+/* 390 */     if (c_bra <= this.ket) this.ket += adjustment;
+/*     */   }
+/*     */ 
+/*     */   protected void insert(int c_bra, int c_ket, CharSequence s)
+/*     */   {
+/* 396 */     insert(c_bra, c_ket, s.toString());
+/*     */   }
+/*     */ 
+/*     */   protected StringBuffer slice_to(StringBuffer s)
+/*     */   {
+/* 403 */     slice_check();
+/* 404 */     s.replace(0, s.length(), this.current.substring(this.bra, this.ket));
+/* 405 */     return s;
+/*     */   }
+/*     */ 
+/*     */   protected StringBuilder slice_to(StringBuilder s)
+/*     */   {
+/* 412 */     slice_check();
+/* 413 */     s.replace(0, s.length(), this.current.substring(this.bra, this.ket));
+/* 414 */     return s;
+/*     */   }
+/*     */ 
+/*     */   protected StringBuffer assign_to(StringBuffer s)
+/*     */   {
+/* 420 */     s.replace(0, s.length(), this.current.substring(0, this.limit));
+/* 421 */     return s;
+/*     */   }
+/*     */ 
+/*     */   protected StringBuilder assign_to(StringBuilder s)
+/*     */   {
+/* 427 */     s.replace(0, s.length(), this.current.substring(0, this.limit));
+/* 428 */     return s;
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.tartarus.snowball.SnowballProgram
+ * JD-Core Version:    0.6.1
+ */

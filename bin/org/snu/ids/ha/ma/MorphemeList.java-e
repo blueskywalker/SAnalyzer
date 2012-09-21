@@ -1,0 +1,79 @@
+/*     */ package org.snu.ids.ha.ma;
+/*     */ 
+/*     */ import java.util.ArrayList;
+/*     */ 
+/*     */ public class MorphemeList extends ArrayList<Morpheme>
+/*     */ {
+/*  24 */   Morpheme firstMorp = null;
+/*  25 */   Morpheme lastMorp = null;
+/*     */ 
+/*     */   public boolean add(Morpheme mp)
+/*     */   {
+/*  51 */     if (this.firstMorp == null) this.firstMorp = mp;
+/*  52 */     this.lastMorp = mp;
+/*  53 */     return super.add(mp);
+/*     */   }
+/*     */ 
+/*     */   public void mergeAt(int idx)
+/*     */   {
+/*  67 */     Morpheme mp1 = (Morpheme)get(idx);
+/*  68 */     Morpheme mp2 = (Morpheme)remove(idx + 1);
+/*  69 */     mp1.append(mp2);
+/*  70 */     if (mp2 == this.lastMorp) this.lastMorp = mp1;
+/*     */   }
+/*     */ 
+/*     */   public boolean equals(MorphemeList ml)
+/*     */   {
+/*  85 */     return getEncStr().equals(ml.getEncStr());
+/*     */   }
+/*     */ 
+/*     */   public String toString()
+/*     */   {
+/* 100 */     StringBuffer sb = new StringBuffer();
+/* 101 */     int i = 0; for (int stop = size(); i < stop; i++) {
+/* 102 */       if (i > 0) sb.append("+");
+/* 103 */       sb.append(get(i));
+/*     */     }
+/* 105 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   public String getSmplStr2()
+/*     */   {
+/* 121 */     StringBuffer sb = new StringBuffer();
+/* 122 */     int i = 0; for (int stop = size(); i < stop; i++) {
+/* 123 */       if (i > 0) sb.append("+");
+/* 124 */       sb.append(((Morpheme)get(i)).getSmplStr2());
+/*     */     }
+/* 126 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   String getEncStr()
+/*     */   {
+/* 141 */     StringBuffer sb = new StringBuffer();
+/* 142 */     int i = 0; for (int stop = size(); i < stop; i++) {
+/* 143 */       if (i > 0) sb.append("+");
+/* 144 */       sb.append(((Morpheme)get(i)).getEncStr());
+/*     */     }
+/* 146 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   public Morpheme getFirstMorp()
+/*     */   {
+/* 155 */     return this.firstMorp;
+/*     */   }
+/*     */ 
+/*     */   public Morpheme getLastMorp()
+/*     */   {
+/* 164 */     return this.lastMorp;
+/*     */   }
+/*     */ 
+/*     */   public int getStartIndex()
+/*     */   {
+/* 170 */     return this.firstMorp.index;
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.ma.MorphemeList
+ * JD-Core Version:    0.6.1
+ */

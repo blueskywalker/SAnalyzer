@@ -1,0 +1,112 @@
+/*     */ package org.snu.ids.ha.ma;
+/*     */ 
+/*     */ import org.snu.ids.ha.constants.POSTag;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public class Eojeol extends MorphemeList
+/*     */ {
+/*  24 */   String exp = null;
+/*     */ 
+/*     */   private Eojeol()
+/*     */   {
+/*     */   }
+/*     */ 
+/*     */   public Eojeol(MCandidate mc)
+/*     */   {
+/*  35 */     this.exp = mc.getExp();
+/*  36 */     addAll(mc);
+/*  37 */     this.firstMorp = mc.firstMorp;
+/*  38 */     this.lastMorp = mc.lastMorp;
+/*     */   }
+/*     */ 
+/*     */   public Eojeol(MExpression me)
+/*     */   {
+/*  44 */     this((MCandidate)me.get(0));
+/*     */   }
+/*     */ 
+/*     */   public String getExp()
+/*     */   {
+/*  58 */     return this.exp;
+/*     */   }
+/*     */ 
+/*     */   public boolean isLastTagOf(long tag)
+/*     */   {
+/*  74 */     if (this.lastMorp.isTag(POSTag.JX))
+/*  75 */       for (int i = size() - 1; i > 0; i--) {
+/*  76 */         Morpheme mp = (Morpheme)get(i);
+/*  77 */         if (!mp.isTag(POSTag.JX)) {
+/*  78 */           if (mp.isTagOf(POSTag.J | POSTag.EM)) return mp.isTagOf(tag);
+/*  79 */           return this.lastMorp.isTagOf(tag);
+/*     */         }
+/*     */       }
+/*  81 */     else if (this.lastMorp.isTagOf(POSTag.S)) {
+/*  82 */       for (int i = size() - 1; i > 0; i--) {
+/*  83 */         Morpheme mp = (Morpheme)get(i);
+/*  84 */         if (!mp.isTag(POSTag.S))
+/*  85 */           return mp.isTagOf(tag);
+/*     */       }
+/*     */     }
+/*  88 */     return this.lastMorp.isTagOf(tag);
+/*     */   }
+/*     */ 
+/*     */   public boolean containsTagOf(long tag)
+/*     */   {
+/* 104 */     int i = 0; for (int size = size(); i < size; i++) {
+/* 105 */       Morpheme mp = (Morpheme)get(i);
+/* 106 */       if (mp.isTagOf(tag)) return true;
+/*     */     }
+/* 108 */     return false;
+/*     */   }
+/*     */ 
+/*     */   public boolean isEnding()
+/*     */   {
+/* 122 */     return this.lastMorp.isTagOf(POSTag.EF);
+/*     */   }
+/*     */ 
+/*     */   Eojeol removeIncorrectlyCombinedEojeol()
+/*     */   {
+/* 136 */     if (size() < 2) return null;
+/* 137 */     Morpheme mp1 = (Morpheme)get(0);
+/* 138 */     Morpheme mp2 = (Morpheme)get(1);
+/*     */ 
+/* 141 */     if (((mp1.isTagOf(POSTag.MA)) && (mp2.isTagOf(POSTag.VP))) || ((mp1.isTagOf(POSTag.MD)) && (mp2.isTagOf(POSTag.N)))) {
+/* 142 */       Eojeol ej = new Eojeol();
+/* 143 */       ej.exp = mp1.string;
+/* 144 */       ej.add(mp1);
+/* 145 */       this.exp = this.exp.substring(ej.exp.length());
+/* 146 */       remove(mp1);
+/* 147 */       return ej;
+/*     */     }
+/*     */ 
+/* 151 */     for (int i = 1; i < size(); i++) {
+/* 152 */       mp1 = (Morpheme)get(i - 1);
+/* 153 */       mp2 = (Morpheme)get(i);
+/*     */ 
+/* 155 */       if ((mp1.isTag(POSTag.ECS)) && (mp2.isTagOf(POSTag.VP))) {
+/* 156 */         Eojeol ej = new Eojeol();
+/*     */ 
+/* 158 */         int idx = 0;
+/* 159 */         for (int j = 0; j < i; j++) {
+/* 160 */           if (j == 0) idx = ((Morpheme)get(0)).index;
+/* 161 */           ej.add((Morpheme)get(0));
+/* 162 */           remove(0);
+/*     */         }
+/* 164 */         ej.exp = this.exp.substring(0, mp2.index - idx);
+/*     */ 
+/* 166 */         this.exp = this.exp.substring(mp2.index - idx);
+/* 167 */         return ej;
+/*     */       }
+/*     */     }
+/* 170 */     return null;
+/*     */   }
+/*     */ 
+/*     */   public String toString()
+/*     */   {
+/* 176 */     return Util.getTabbedString(getExp(), 4, 16) + "=> [" + super.toString() + "]";
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.ma.Eojeol
+ * JD-Core Version:    0.6.1
+ */

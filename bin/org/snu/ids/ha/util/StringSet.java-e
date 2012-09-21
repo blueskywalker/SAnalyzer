@@ -1,0 +1,36 @@
+/*    */ package org.snu.ids.ha.util;
+/*    */ 
+/*    */ import java.util.HashSet;
+/*    */ 
+/*    */ public class StringSet extends HashSet<String>
+/*    */ {
+/* 24 */   int maxLen = 0;
+/*    */ 
+/*    */   public StringSet(String[] words)
+/*    */   {
+/* 30 */     addAll(words);
+/*    */   }
+/*    */ 
+/*    */   public boolean contains(char ch)
+/*    */   {
+/* 36 */     return super.contains(ch);
+/*    */   }
+/*    */ 
+/*    */   public void addAll(String[] words)
+/*    */   {
+/* 51 */     if (words == null) return;
+/* 52 */     int len = -1;
+/* 53 */     String temp = null;
+/* 54 */     int i = 0; for (int stop = words.length; i < stop; i++) {
+/* 55 */       temp = words[i];
+/* 56 */       len = temp.length();
+/* 57 */       add(temp);
+/* 58 */       if (len > this.maxLen) this.maxLen = len;
+/*    */     }
+/*    */   }
+/*    */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.util.StringSet
+ * JD-Core Version:    0.6.1
+ */

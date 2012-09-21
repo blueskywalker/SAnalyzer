@@ -1,0 +1,920 @@
+/*      */ package org.tartarus.snowball;
+/*      */ 
+/*      */ public class EnglishStemmer extends SnowballStemmer
+/*      */ {
+/*      */   private static final long serialVersionUID = 1L;
+/*   19 */   private static final EnglishStemmer methodObject = new EnglishStemmer();
+/*      */ 
+/*   21 */   private static final Among[] A_0 = { 
+/*   22 */     new Among("arsen", -1, -1, "", methodObject), 
+/*   23 */     new Among("commun", -1, -1, "", methodObject), 
+/*   24 */     new Among("gener", -1, -1, "", methodObject) };
+/*      */ 
+/*   26 */   private static final Among[] A_1 = { 
+/*   27 */     new Among("'", -1, 1, "", methodObject), 
+/*   28 */     new Among("'s'", 0, 1, "", methodObject), 
+/*   29 */     new Among("'s", -1, 1, "", methodObject) };
+/*      */ 
+/*   31 */   private static final Among[] A_2 = { 
+/*   32 */     new Among("ied", -1, 2, "", methodObject), 
+/*   33 */     new Among("s", -1, 3, "", methodObject), 
+/*   34 */     new Among("ies", 1, 2, "", methodObject), 
+/*   35 */     new Among("sses", 1, 1, "", methodObject), 
+/*   36 */     new Among("ss", 1, -1, "", methodObject), 
+/*   37 */     new Among("us", 1, -1, "", methodObject) };
+/*      */ 
+/*   39 */   private static final Among[] A_3 = { 
+/*   40 */     new Among("", -1, 3, "", methodObject), 
+/*   41 */     new Among("bb", 0, 2, "", methodObject), 
+/*   42 */     new Among("dd", 0, 2, "", methodObject), 
+/*   43 */     new Among("ff", 0, 2, "", methodObject), 
+/*   44 */     new Among("gg", 0, 2, "", methodObject), 
+/*   45 */     new Among("bl", 0, 1, "", methodObject), 
+/*   46 */     new Among("mm", 0, 2, "", methodObject), 
+/*   47 */     new Among("nn", 0, 2, "", methodObject), 
+/*   48 */     new Among("pp", 0, 2, "", methodObject), 
+/*   49 */     new Among("rr", 0, 2, "", methodObject), 
+/*   50 */     new Among("at", 0, 1, "", methodObject), 
+/*   51 */     new Among("tt", 0, 2, "", methodObject), 
+/*   52 */     new Among("iz", 0, 1, "", methodObject) };
+/*      */ 
+/*   54 */   private static final Among[] A_4 = { 
+/*   55 */     new Among("ed", -1, 2, "", methodObject), 
+/*   56 */     new Among("eed", 0, 1, "", methodObject), 
+/*   57 */     new Among("ing", -1, 2, "", methodObject), 
+/*   58 */     new Among("edly", -1, 2, "", methodObject), 
+/*   59 */     new Among("eedly", 3, 1, "", methodObject), 
+/*   60 */     new Among("ingly", -1, 2, "", methodObject) };
+/*      */ 
+/*   62 */   private static final Among[] A_5 = { 
+/*   63 */     new Among("anci", -1, 3, "", methodObject), 
+/*   64 */     new Among("enci", -1, 2, "", methodObject), 
+/*   65 */     new Among("ogi", -1, 13, "", methodObject), 
+/*   66 */     new Among("li", -1, 16, "", methodObject), 
+/*   67 */     new Among("bli", 3, 12, "", methodObject), 
+/*   68 */     new Among("abli", 4, 4, "", methodObject), 
+/*   69 */     new Among("alli", 3, 8, "", methodObject), 
+/*   70 */     new Among("fulli", 3, 14, "", methodObject), 
+/*   71 */     new Among("lessli", 3, 15, "", methodObject), 
+/*   72 */     new Among("ousli", 3, 10, "", methodObject), 
+/*   73 */     new Among("entli", 3, 5, "", methodObject), 
+/*   74 */     new Among("aliti", -1, 8, "", methodObject), 
+/*   75 */     new Among("biliti", -1, 12, "", methodObject), 
+/*   76 */     new Among("iviti", -1, 11, "", methodObject), 
+/*   77 */     new Among("tional", -1, 1, "", methodObject), 
+/*   78 */     new Among("ational", 14, 7, "", methodObject), 
+/*   79 */     new Among("alism", -1, 8, "", methodObject), 
+/*   80 */     new Among("ation", -1, 7, "", methodObject), 
+/*   81 */     new Among("ization", 17, 6, "", methodObject), 
+/*   82 */     new Among("izer", -1, 6, "", methodObject), 
+/*   83 */     new Among("ator", -1, 7, "", methodObject), 
+/*   84 */     new Among("iveness", -1, 11, "", methodObject), 
+/*   85 */     new Among("fulness", -1, 9, "", methodObject), 
+/*   86 */     new Among("ousness", -1, 10, "", methodObject) };
+/*      */ 
+/*   88 */   private static final Among[] A_6 = { 
+/*   89 */     new Among("icate", -1, 4, "", methodObject), 
+/*   90 */     new Among("ative", -1, 6, "", methodObject), 
+/*   91 */     new Among("alize", -1, 3, "", methodObject), 
+/*   92 */     new Among("iciti", -1, 4, "", methodObject), 
+/*   93 */     new Among("ical", -1, 4, "", methodObject), 
+/*   94 */     new Among("tional", -1, 1, "", methodObject), 
+/*   95 */     new Among("ational", 5, 2, "", methodObject), 
+/*   96 */     new Among("ful", -1, 5, "", methodObject), 
+/*   97 */     new Among("ness", -1, 5, "", methodObject) };
+/*      */ 
+/*   99 */   private static final Among[] A_7 = { 
+/*  100 */     new Among("ic", -1, 1, "", methodObject), 
+/*  101 */     new Among("ance", -1, 1, "", methodObject), 
+/*  102 */     new Among("ence", -1, 1, "", methodObject), 
+/*  103 */     new Among("able", -1, 1, "", methodObject), 
+/*  104 */     new Among("ible", -1, 1, "", methodObject), 
+/*  105 */     new Among("ate", -1, 1, "", methodObject), 
+/*  106 */     new Among("ive", -1, 1, "", methodObject), 
+/*  107 */     new Among("ize", -1, 1, "", methodObject), 
+/*  108 */     new Among("iti", -1, 1, "", methodObject), 
+/*  109 */     new Among("al", -1, 1, "", methodObject), 
+/*  110 */     new Among("ism", -1, 1, "", methodObject), 
+/*  111 */     new Among("ion", -1, 2, "", methodObject), 
+/*  112 */     new Among("er", -1, 1, "", methodObject), 
+/*  113 */     new Among("ous", -1, 1, "", methodObject), 
+/*  114 */     new Among("ant", -1, 1, "", methodObject), 
+/*  115 */     new Among("ent", -1, 1, "", methodObject), 
+/*  116 */     new Among("ment", 15, 1, "", methodObject), 
+/*  117 */     new Among("ement", 16, 1, "", methodObject) };
+/*      */ 
+/*  119 */   private static final Among[] a_8 = { 
+/*  120 */     new Among("e", -1, 1, "", methodObject), 
+/*  121 */     new Among("l", -1, 2, "", methodObject) };
+/*      */ 
+/*  123 */   private static final Among[] a_9 = { 
+/*  124 */     new Among("succeed", -1, -1, "", methodObject), 
+/*  125 */     new Among("proceed", -1, -1, "", methodObject), 
+/*  126 */     new Among("exceed", -1, -1, "", methodObject), 
+/*  127 */     new Among("canning", -1, -1, "", methodObject), 
+/*  128 */     new Among("inning", -1, -1, "", methodObject), 
+/*  129 */     new Among("earring", -1, -1, "", methodObject), 
+/*  130 */     new Among("herring", -1, -1, "", methodObject), 
+/*  131 */     new Among("outing", -1, -1, "", methodObject) };
+/*      */ 
+/*  133 */   private static final Among[] a_10 = { 
+/*  134 */     new Among("andes", -1, -1, "", methodObject), 
+/*  135 */     new Among("atlas", -1, -1, "", methodObject), 
+/*  136 */     new Among("bias", -1, -1, "", methodObject), 
+/*  137 */     new Among("cosmos", -1, -1, "", methodObject), 
+/*  138 */     new Among("dying", -1, 3, "", methodObject), 
+/*  139 */     new Among("early", -1, 9, "", methodObject), 
+/*  140 */     new Among("gently", -1, 7, "", methodObject), 
+/*  141 */     new Among("howe", -1, -1, "", methodObject), 
+/*  142 */     new Among("idly", -1, 6, "", methodObject), 
+/*  143 */     new Among("lying", -1, 4, "", methodObject), 
+/*  144 */     new Among("news", -1, -1, "", methodObject), 
+/*  145 */     new Among("only", -1, 10, "", methodObject), 
+/*  146 */     new Among("singly", -1, 11, "", methodObject), 
+/*  147 */     new Among("skies", -1, 2, "", methodObject), 
+/*  148 */     new Among("skis", -1, 1, "", methodObject), 
+/*  149 */     new Among("sky", -1, -1, "", methodObject), 
+/*  150 */     new Among("tying", -1, 5, "", methodObject), 
+/*  151 */     new Among("ugly", -1, 8, "", methodObject) };
+/*      */ 
+/*  153 */   private static final char[] g_v = { '\021', 'A', '\020', '\001' };
+/*      */ 
+/*  155 */   private static final char[] g_v_WXY = { '\001', '\021', 'A', 'Ð', '\001' };
+/*      */ 
+/*  157 */   private static final char[] g_valid_LI = { '7', '', '\002' };
+/*      */   private boolean B_Y_found;
+/*      */   private int I_p2;
+/*      */   private int I_p1;
+/*      */ 
+/*      */   private void copy_from(EnglishStemmer other)
+/*      */   {
+/*  167 */     this.B_Y_found = other.B_Y_found;
+/*  168 */     this.I_p2 = other.I_p2;
+/*  169 */     this.I_p1 = other.I_p1;
+/*  170 */     super.copy_from(other);
+/*      */   }
+/*      */ 
+/*      */   private boolean r_prelude()
+/*      */   {
+/*  184 */     this.B_Y_found = false;
+/*      */ 
+/*  186 */     int v_1 = this.cursor;
+/*      */ 
+/*  190 */     this.bra = this.cursor;
+/*      */ 
+/*  192 */     if (eq_s(1, "'"))
+/*      */     {
+/*  196 */       this.ket = this.cursor;
+/*      */ 
+/*  198 */       slice_del();
+/*      */     }
+/*  200 */     this.cursor = v_1;
+/*      */ 
+/*  202 */     int v_2 = this.cursor;
+/*      */ 
+/*  206 */     this.bra = this.cursor;
+/*      */ 
+/*  208 */     if (eq_s(1, "y"))
+/*      */     {
+/*  212 */       this.ket = this.cursor;
+/*      */ 
+/*  214 */       slice_from("Y");
+/*      */ 
+/*  216 */       this.B_Y_found = true;
+/*  218 */     }this.cursor = v_2;
+/*      */ 
+/*  220 */     int v_3 = this.cursor;
+/*      */     int v_4;
+/*      */     while (true) {
+/*  224 */       v_4 = this.cursor;
+/*      */       while (true)
+/*      */       {
+/*  229 */         int v_5 = this.cursor;
+/*      */ 
+/*  232 */         if (in_grouping(g_v, 97, 121))
+/*      */         {
+/*  236 */           this.bra = this.cursor;
+/*      */ 
+/*  238 */           if (eq_s(1, "y"))
+/*      */           {
+/*  242 */             this.ket = this.cursor;
+/*  243 */             this.cursor = v_5;
+/*  244 */             break;
+/*      */           }
+/*      */         }
+/*  246 */         this.cursor = v_5;
+/*  247 */         if (this.cursor >= this.limit) {
+/*      */           break label221;
+/*      */         }
+/*  250 */         this.cursor += 1;
+/*      */       }
+/*      */       int v_5;
+/*  253 */       slice_from("Y");
+/*      */ 
+/*  255 */       this.B_Y_found = true;
+/*      */     }
+/*      */ 
+/*  258 */     label221: this.cursor = v_4;
+/*      */ 
+/*  262 */     this.cursor = v_3;
+/*  263 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_mark_regions()
+/*      */   {
+/*  272 */     this.I_p1 = this.limit;
+/*  273 */     this.I_p2 = this.limit;
+/*      */ 
+/*  275 */     int v_1 = this.cursor;
+/*      */ 
+/*  280 */     int v_2 = this.cursor;
+/*      */ 
+/*  283 */     if (find_among(A_0, 3) == 0)
+/*      */     {
+/*  288 */       this.cursor = v_2;
+/*      */ 
+/*  293 */       while (!in_grouping(g_v, 97, 121))
+/*      */       {
+/*  298 */         if (this.cursor >= this.limit) {
+/*      */           break label222;
+/*      */         }
+/*  301 */         this.cursor += 1;
+/*      */       }
+/*      */ 
+/*  306 */       while (!out_grouping(g_v, 97, 121))
+/*      */       {
+/*  311 */         if (this.cursor >= this.limit) {
+/*      */           break label222;
+/*      */         }
+/*  314 */         this.cursor += 1;
+/*      */       }
+/*      */     }
+/*      */ 
+/*  318 */     this.I_p1 = this.cursor;
+/*      */ 
+/*  322 */     while (!in_grouping(g_v, 97, 121))
+/*      */     {
+/*  327 */       if (this.cursor >= this.limit) {
+/*      */         break label222;
+/*      */       }
+/*  330 */       this.cursor += 1;
+/*      */     }
+/*      */ 
+/*  335 */     while (!out_grouping(g_v, 97, 121))
+/*      */     {
+/*  340 */       if (this.cursor >= this.limit) {
+/*      */         break label222;
+/*      */       }
+/*  343 */       this.cursor += 1;
+/*      */     }
+/*      */ 
+/*  346 */     this.I_p2 = this.cursor;
+/*      */ 
+/*  348 */     label222: this.cursor = v_1;
+/*  349 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_shortv()
+/*      */   {
+/*  359 */     int v_1 = this.limit - this.cursor;
+/*      */ 
+/*  362 */     if ((!out_grouping_b(g_v_WXY, 89, 121)) || 
+/*  365 */       (!in_grouping_b(g_v, 97, 121)) || 
+/*  368 */       (!out_grouping_b(g_v, 97, 121)))
+/*      */     {
+/*  373 */       this.cursor = (this.limit - v_1);
+/*      */ 
+/*  375 */       if (!out_grouping_b(g_v, 97, 121)) {
+/*  376 */         return false;
+/*      */       }
+/*  378 */       if (!in_grouping_b(g_v, 97, 121)) {
+/*  379 */         return false;
+/*      */       }
+/*      */ 
+/*  382 */       if (this.cursor > this.limit_backward) {
+/*  383 */         return false;
+/*      */       }
+/*      */     }
+/*  386 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_R1()
+/*      */   {
+/*  392 */     if (this.I_p1 > this.cursor) {
+/*  393 */       return false;
+/*      */     }
+/*  395 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_R2()
+/*      */   {
+/*  401 */     if (this.I_p2 > this.cursor) {
+/*  402 */       return false;
+/*      */     }
+/*  404 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_Step_1a()
+/*      */   {
+/*  415 */     int v_1 = this.limit - this.cursor;
+/*      */ 
+/*  419 */     this.ket = this.cursor;
+/*      */ 
+/*  421 */     int among_var = find_among_b(A_1, 3);
+/*  422 */     if (among_var == 0) {
+/*  423 */       this.cursor = (this.limit - v_1);
+/*      */     }
+/*      */     else
+/*      */     {
+/*  427 */       this.bra = this.cursor;
+/*  428 */       switch (among_var) {
+/*      */       case 0:
+/*  430 */         this.cursor = (this.limit - v_1);
+/*  431 */         break;
+/*      */       case 1:
+/*  435 */         slice_del();
+/*      */       }
+/*      */ 
+/*      */     }
+/*      */ 
+/*  440 */     this.ket = this.cursor;
+/*      */ 
+/*  442 */     among_var = find_among_b(A_2, 6);
+/*  443 */     if (among_var == 0) {
+/*  444 */       return false;
+/*      */     }
+/*      */ 
+/*  447 */     this.bra = this.cursor;
+/*  448 */     switch (among_var) {
+/*      */     case 0:
+/*  450 */       return false;
+/*      */     case 1:
+/*  454 */       slice_from("ss");
+/*  455 */       break;
+/*      */     case 2:
+/*  460 */       int v_2 = this.limit - this.cursor;
+/*      */ 
+/*  465 */       int c = this.cursor - 2;
+/*  466 */       if ((this.limit_backward <= c) && (c <= this.limit))
+/*      */       {
+/*  469 */         this.cursor = c;
+/*      */ 
+/*  472 */         slice_from("i");
+/*      */       }
+/*      */       else {
+/*  475 */         this.cursor = (this.limit - v_2);
+/*      */ 
+/*  477 */         slice_from("ie");
+/*      */       }
+/*  479 */       break;
+/*      */     case 3:
+/*  483 */       if (this.cursor <= this.limit_backward) {
+/*  484 */         return false;
+/*      */       }
+/*  486 */       this.cursor -= 1;
+/*      */ 
+/*  490 */       while (!in_grouping_b(g_v, 97, 121))
+/*      */       {
+/*  495 */         if (this.cursor <= this.limit_backward) {
+/*  496 */           return false;
+/*      */         }
+/*  498 */         this.cursor -= 1;
+/*      */       }
+/*      */ 
+/*  501 */       slice_del();
+/*      */     }
+/*      */ 
+/*  504 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_Step_1b()
+/*      */   {
+/*  516 */     this.ket = this.cursor;
+/*      */ 
+/*  518 */     int among_var = find_among_b(A_4, 6);
+/*  519 */     if (among_var == 0) {
+/*  520 */       return false;
+/*      */     }
+/*      */ 
+/*  523 */     this.bra = this.cursor;
+/*  524 */     switch (among_var) {
+/*      */     case 0:
+/*  526 */       return false;
+/*      */     case 1:
+/*  530 */       if (!r_R1()) {
+/*  531 */         return false;
+/*      */       }
+/*      */ 
+/*  534 */       slice_from("ee");
+/*  535 */       break;
+/*      */     case 2:
+/*  539 */       int v_1 = this.limit - this.cursor;
+/*      */ 
+/*  543 */       while (!in_grouping_b(g_v, 97, 121))
+/*      */       {
+/*  548 */         if (this.cursor <= this.limit_backward) {
+/*  549 */           return false;
+/*      */         }
+/*  551 */         this.cursor -= 1;
+/*      */       }
+/*  553 */       this.cursor = (this.limit - v_1);
+/*      */ 
+/*  555 */       slice_del();
+/*      */ 
+/*  557 */       int v_3 = this.limit - this.cursor;
+/*      */ 
+/*  559 */       among_var = find_among_b(A_3, 13);
+/*  560 */       if (among_var == 0) {
+/*  561 */         return false;
+/*      */       }
+/*  563 */       this.cursor = (this.limit - v_3);
+/*  564 */       switch (among_var) {
+/*      */       case 0:
+/*  566 */         return false;
+/*      */       case 1:
+/*  571 */         int c = this.cursor;
+/*  572 */         insert(this.cursor, this.cursor, "e");
+/*  573 */         this.cursor = c;
+/*      */ 
+/*  575 */         break;
+/*      */       case 2:
+/*  579 */         this.ket = this.cursor;
+/*      */ 
+/*  581 */         if (this.cursor <= this.limit_backward) {
+/*  582 */           return false;
+/*      */         }
+/*  584 */         this.cursor -= 1;
+/*      */ 
+/*  586 */         this.bra = this.cursor;
+/*      */ 
+/*  588 */         slice_del();
+/*  589 */         break;
+/*      */       case 3:
+/*  593 */         if (this.cursor != this.I_p1) {
+/*  594 */           return false;
+/*      */         }
+/*      */ 
+/*  597 */         int v_4 = this.limit - this.cursor;
+/*      */ 
+/*  599 */         if (!r_shortv()) {
+/*  600 */           return false;
+/*      */         }
+/*  602 */         this.cursor = (this.limit - v_4);
+/*      */ 
+/*  605 */         int c = this.cursor;
+/*  606 */         insert(this.cursor, this.cursor, "e");
+/*  607 */         this.cursor = c;
+/*      */       }
+/*      */ 
+/*      */       break;
+/*      */     }
+/*      */ 
+/*  613 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_Step_1c()
+/*      */   {
+/*  623 */     this.ket = this.cursor;
+/*      */ 
+/*  626 */     int v_1 = this.limit - this.cursor;
+/*      */ 
+/*  629 */     if (!eq_s_b(1, "y"))
+/*      */     {
+/*  634 */       this.cursor = (this.limit - v_1);
+/*      */ 
+/*  636 */       if (!eq_s_b(1, "Y")) {
+/*  637 */         return false;
+/*      */       }
+/*      */     }
+/*      */ 
+/*  641 */     this.bra = this.cursor;
+/*  642 */     if (!out_grouping_b(g_v, 97, 121)) {
+/*  643 */       return false;
+/*      */     }
+/*      */ 
+/*  647 */     int v_2 = this.limit - this.cursor;
+/*      */ 
+/*  650 */     if (this.cursor <= this.limit_backward)
+/*      */     {
+/*  653 */       return false;
+/*      */     }
+/*  655 */     this.cursor = (this.limit - v_2);
+/*      */ 
+/*  658 */     slice_from("i");
+/*  659 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_Step_2()
+/*      */   {
+/*  668 */     this.ket = this.cursor;
+/*      */ 
+/*  670 */     int among_var = find_among_b(A_5, 24);
+/*  671 */     if (among_var == 0) {
+/*  672 */       return false;
+/*      */     }
+/*      */ 
+/*  675 */     this.bra = this.cursor;
+/*      */ 
+/*  677 */     if (!r_R1()) {
+/*  678 */       return false;
+/*      */     }
+/*  680 */     switch (among_var) {
+/*      */     case 0:
+/*  682 */       return false;
+/*      */     case 1:
+/*  686 */       slice_from("tion");
+/*  687 */       break;
+/*      */     case 2:
+/*  691 */       slice_from("ence");
+/*  692 */       break;
+/*      */     case 3:
+/*  696 */       slice_from("ance");
+/*  697 */       break;
+/*      */     case 4:
+/*  701 */       slice_from("able");
+/*  702 */       break;
+/*      */     case 5:
+/*  706 */       slice_from("ent");
+/*  707 */       break;
+/*      */     case 6:
+/*  711 */       slice_from("ize");
+/*  712 */       break;
+/*      */     case 7:
+/*  716 */       slice_from("ate");
+/*  717 */       break;
+/*      */     case 8:
+/*  721 */       slice_from("al");
+/*  722 */       break;
+/*      */     case 9:
+/*  726 */       slice_from("ful");
+/*  727 */       break;
+/*      */     case 10:
+/*  731 */       slice_from("ous");
+/*  732 */       break;
+/*      */     case 11:
+/*  736 */       slice_from("ive");
+/*  737 */       break;
+/*      */     case 12:
+/*  741 */       slice_from("ble");
+/*  742 */       break;
+/*      */     case 13:
+/*  746 */       if (!eq_s_b(1, "l")) {
+/*  747 */         return false;
+/*      */       }
+/*      */ 
+/*  750 */       slice_from("og");
+/*  751 */       break;
+/*      */     case 14:
+/*  755 */       slice_from("ful");
+/*  756 */       break;
+/*      */     case 15:
+/*  760 */       slice_from("less");
+/*  761 */       break;
+/*      */     case 16:
+/*  764 */       if (!in_grouping_b(g_valid_LI, 99, 116)) {
+/*  765 */         return false;
+/*      */       }
+/*      */ 
+/*  768 */       slice_del();
+/*      */     }
+/*      */ 
+/*  771 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_Step_3()
+/*      */   {
+/*  780 */     this.ket = this.cursor;
+/*      */ 
+/*  782 */     int among_var = find_among_b(A_6, 9);
+/*  783 */     if (among_var == 0) {
+/*  784 */       return false;
+/*      */     }
+/*      */ 
+/*  787 */     this.bra = this.cursor;
+/*      */ 
+/*  789 */     if (!r_R1()) {
+/*  790 */       return false;
+/*      */     }
+/*  792 */     switch (among_var) {
+/*      */     case 0:
+/*  794 */       return false;
+/*      */     case 1:
+/*  798 */       slice_from("tion");
+/*  799 */       break;
+/*      */     case 2:
+/*  803 */       slice_from("ate");
+/*  804 */       break;
+/*      */     case 3:
+/*  808 */       slice_from("al");
+/*  809 */       break;
+/*      */     case 4:
+/*  813 */       slice_from("ic");
+/*  814 */       break;
+/*      */     case 5:
+/*  818 */       slice_del();
+/*  819 */       break;
+/*      */     case 6:
+/*  823 */       if (!r_R2()) {
+/*  824 */         return false;
+/*      */       }
+/*      */ 
+/*  827 */       slice_del();
+/*      */     }
+/*      */ 
+/*  830 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_Step_4()
+/*      */   {
+/*  840 */     this.ket = this.cursor;
+/*      */ 
+/*  842 */     int among_var = find_among_b(A_7, 18);
+/*  843 */     if (among_var == 0) {
+/*  844 */       return false;
+/*      */     }
+/*      */ 
+/*  847 */     this.bra = this.cursor;
+/*      */ 
+/*  849 */     if (!r_R2()) {
+/*  850 */       return false;
+/*      */     }
+/*  852 */     switch (among_var) {
+/*      */     case 0:
+/*  854 */       return false;
+/*      */     case 1:
+/*  858 */       slice_del();
+/*  859 */       break;
+/*      */     case 2:
+/*  864 */       int v_1 = this.limit - this.cursor;
+/*      */ 
+/*  867 */       if (!eq_s_b(1, "s"))
+/*      */       {
+/*  872 */         this.cursor = (this.limit - v_1);
+/*      */ 
+/*  874 */         if (!eq_s_b(1, "t")) {
+/*  875 */           return false;
+/*      */         }
+/*      */       }
+/*      */ 
+/*  879 */       slice_del();
+/*      */     }
+/*      */ 
+/*  882 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_Step_5()
+/*      */   {
+/*  893 */     this.ket = this.cursor;
+/*      */ 
+/*  895 */     int among_var = find_among_b(a_8, 2);
+/*  896 */     if (among_var == 0) {
+/*  897 */       return false;
+/*      */     }
+/*      */ 
+/*  900 */     this.bra = this.cursor;
+/*  901 */     switch (among_var) {
+/*      */     case 0:
+/*  903 */       return false;
+/*      */     case 1:
+/*  908 */       int v_1 = this.limit - this.cursor;
+/*      */ 
+/*  911 */       if (!r_R2())
+/*      */       {
+/*  916 */         this.cursor = (this.limit - v_1);
+/*      */ 
+/*  919 */         if (!r_R1()) {
+/*  920 */           return false;
+/*      */         }
+/*      */ 
+/*  924 */         int v_2 = this.limit - this.cursor;
+/*      */ 
+/*  927 */         if (r_shortv())
+/*      */         {
+/*  930 */           return false;
+/*      */         }
+/*  932 */         this.cursor = (this.limit - v_2);
+/*      */       }
+/*      */ 
+/*  936 */       slice_del();
+/*  937 */       break;
+/*      */     case 2:
+/*  941 */       if (!r_R2()) {
+/*  942 */         return false;
+/*      */       }
+/*      */ 
+/*  945 */       if (!eq_s_b(1, "l")) {
+/*  946 */         return false;
+/*      */       }
+/*      */ 
+/*  949 */       slice_del();
+/*      */     }
+/*      */ 
+/*  952 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_exception2()
+/*      */   {
+/*  960 */     this.ket = this.cursor;
+/*      */ 
+/*  962 */     if (find_among_b(a_9, 8) == 0) {
+/*  963 */       return false;
+/*      */     }
+/*      */ 
+/*  966 */     this.bra = this.cursor;
+/*      */ 
+/*  968 */     if (this.cursor > this.limit_backward) {
+/*  969 */       return false;
+/*      */     }
+/*  971 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_exception1()
+/*      */   {
+/*  980 */     this.bra = this.cursor;
+/*      */ 
+/*  982 */     int among_var = find_among(a_10, 18);
+/*  983 */     if (among_var == 0) {
+/*  984 */       return false;
+/*      */     }
+/*      */ 
+/*  987 */     this.ket = this.cursor;
+/*      */ 
+/*  989 */     if (this.cursor < this.limit) {
+/*  990 */       return false;
+/*      */     }
+/*  992 */     switch (among_var) {
+/*      */     case 0:
+/*  994 */       return false;
+/*      */     case 1:
+/*  998 */       slice_from("ski");
+/*  999 */       break;
+/*      */     case 2:
+/* 1003 */       slice_from("sky");
+/* 1004 */       break;
+/*      */     case 3:
+/* 1008 */       slice_from("die");
+/* 1009 */       break;
+/*      */     case 4:
+/* 1013 */       slice_from("lie");
+/* 1014 */       break;
+/*      */     case 5:
+/* 1018 */       slice_from("tie");
+/* 1019 */       break;
+/*      */     case 6:
+/* 1023 */       slice_from("idl");
+/* 1024 */       break;
+/*      */     case 7:
+/* 1028 */       slice_from("gentl");
+/* 1029 */       break;
+/*      */     case 8:
+/* 1033 */       slice_from("ugli");
+/* 1034 */       break;
+/*      */     case 9:
+/* 1038 */       slice_from("earli");
+/* 1039 */       break;
+/*      */     case 10:
+/* 1043 */       slice_from("onli");
+/* 1044 */       break;
+/*      */     case 11:
+/* 1048 */       slice_from("singl");
+/*      */     }
+/*      */ 
+/* 1051 */     return true;
+/*      */   }
+/*      */ 
+/*      */   private boolean r_postlude()
+/*      */   {
+/* 1061 */     if (!this.B_Y_found)
+/* 1062 */       return false;
+/*      */     int v_1;
+/*      */     while (true)
+/*      */     {
+/* 1066 */       v_1 = this.cursor;
+/*      */       while (true)
+/*      */       {
+/* 1071 */         int v_2 = this.cursor;
+/*      */ 
+/* 1075 */         this.bra = this.cursor;
+/*      */ 
+/* 1077 */         if (eq_s(1, "Y"))
+/*      */         {
+/* 1081 */           this.ket = this.cursor;
+/* 1082 */           this.cursor = v_2;
+/* 1083 */           break;
+/*      */         }
+/* 1085 */         this.cursor = v_2;
+/* 1086 */         if (this.cursor >= this.limit) {
+/*      */           break label99;
+/*      */         }
+/* 1089 */         this.cursor += 1;
+/*      */       }
+/*      */       int v_2;
+/* 1092 */       slice_from("y");
+/*      */     }
+/*      */ 
+/* 1095 */     label99: this.cursor = v_1;
+/*      */ 
+/* 1098 */     return true;
+/*      */   }
+/*      */ 
+/*      */   public boolean stem()
+/*      */   {
+/* 1120 */     int v_1 = this.cursor;
+/*      */ 
+/* 1123 */     if (!r_exception1())
+/*      */     {
+/* 1128 */       this.cursor = v_1;
+/*      */ 
+/* 1132 */       int v_2 = this.cursor;
+/*      */ 
+/* 1136 */       int c = this.cursor + 3;
+/* 1137 */       if ((c >= 0) && (c <= this.limit))
+/*      */       {
+/* 1140 */         this.cursor = c;
+/*      */       }
+/*      */       else
+/*      */       {
+/* 1144 */         this.cursor = v_2;
+/*      */ 
+/* 1146 */         break label380;
+/*      */       }
+/* 1148 */       this.cursor = v_1;
+/*      */ 
+/* 1151 */       int v_3 = this.cursor;
+/*      */ 
+/* 1154 */       if (!r_prelude());
+/* 1158 */       this.cursor = v_3;
+/*      */ 
+/* 1160 */       int v_4 = this.cursor;
+/*      */ 
+/* 1163 */       if (!r_mark_regions());
+/* 1167 */       this.cursor = v_4;
+/*      */ 
+/* 1169 */       this.limit_backward = this.cursor;
+/* 1170 */       this.cursor = this.limit;
+/*      */ 
+/* 1173 */       int v_5 = this.limit - this.cursor;
+/*      */ 
+/* 1176 */       if (!r_Step_1a());
+/* 1180 */       this.cursor = (this.limit - v_5);
+/*      */ 
+/* 1183 */       int v_6 = this.limit - this.cursor;
+/*      */ 
+/* 1186 */       if (!r_exception2())
+/*      */       {
+/* 1191 */         this.cursor = (this.limit - v_6);
+/*      */ 
+/* 1194 */         int v_7 = this.limit - this.cursor;
+/*      */ 
+/* 1197 */         if (!r_Step_1b());
+/* 1201 */         this.cursor = (this.limit - v_7);
+/*      */ 
+/* 1203 */         int v_8 = this.limit - this.cursor;
+/*      */ 
+/* 1206 */         if (!r_Step_1c());
+/* 1210 */         this.cursor = (this.limit - v_8);
+/*      */ 
+/* 1212 */         int v_9 = this.limit - this.cursor;
+/*      */ 
+/* 1215 */         if (!r_Step_2());
+/* 1219 */         this.cursor = (this.limit - v_9);
+/*      */ 
+/* 1221 */         int v_10 = this.limit - this.cursor;
+/*      */ 
+/* 1224 */         if (!r_Step_3());
+/* 1228 */         this.cursor = (this.limit - v_10);
+/*      */ 
+/* 1230 */         int v_11 = this.limit - this.cursor;
+/*      */ 
+/* 1233 */         if (!r_Step_4());
+/* 1237 */         this.cursor = (this.limit - v_11);
+/*      */ 
+/* 1239 */         int v_12 = this.limit - this.cursor;
+/*      */ 
+/* 1242 */         if (!r_Step_5());
+/* 1246 */         this.cursor = (this.limit - v_12);
+/*      */       }
+/* 1248 */       this.cursor = this.limit_backward;
+/* 1249 */       int v_13 = this.cursor;
+/*      */ 
+/* 1252 */       if (!r_postlude());
+/* 1256 */       this.cursor = v_13;
+/*      */     }
+/* 1258 */     label380: return true;
+/*      */   }
+/*      */ 
+/*      */   public boolean equals(Object o)
+/*      */   {
+/* 1264 */     return o instanceof EnglishStemmer;
+/*      */   }
+/*      */ 
+/*      */   public int hashCode()
+/*      */   {
+/* 1270 */     return EnglishStemmer.class.getName().hashCode();
+/*      */   }
+/*      */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.tartarus.snowball.EnglishStemmer
+ * JD-Core Version:    0.6.1
+ */

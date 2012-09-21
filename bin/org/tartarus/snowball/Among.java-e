@@ -1,0 +1,35 @@
+/*    */ package org.tartarus.snowball;
+/*    */ 
+/*    */ import java.lang.reflect.Method;
+/*    */ 
+/*    */ public class Among
+/*    */ {
+/*    */   public final int s_size;
+/*    */   public final char[] s;
+/*    */   public final int substring_i;
+/*    */   public final int result;
+/*    */   public final Method method;
+/*    */   public final SnowballProgram methodobject;
+/*    */ 
+/*    */   public Among(String s, int substring_i, int result, String methodname, SnowballProgram methodobject)
+/*    */   {
+/* 11 */     this.s_size = s.length();
+/* 12 */     this.s = s.toCharArray();
+/* 13 */     this.substring_i = substring_i;
+/* 14 */     this.result = result;
+/* 15 */     this.methodobject = methodobject;
+/* 16 */     if (methodname.length() == 0)
+/* 17 */       this.method = null;
+/*    */     else
+/*    */       try {
+/* 20 */         this.method = methodobject.getClass().getDeclaredMethod(methodname, new Class[0]);
+/*    */       } catch (NoSuchMethodException e) {
+/* 22 */         throw new RuntimeException(e);
+/*    */       }
+/*    */   }
+/*    */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.tartarus.snowball.Among
+ * JD-Core Version:    0.6.1
+ */

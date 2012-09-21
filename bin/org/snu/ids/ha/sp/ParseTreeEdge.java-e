@@ -1,0 +1,73 @@
+/*    */ package org.snu.ids.ha.sp;
+/*    */ 
+/*    */ public class ParseTreeEdge
+/*    */ {
+/*  6 */   private String relation = null;
+/*  7 */   private ParseTreeNode childNode = null;
+/*  8 */   private int distance = 0;
+/*  9 */   private int priority = 0;
+/*    */ 
+/*    */   public ParseTreeEdge(String relation, ParseTreeNode childNode, ParseTreeNode parentNode, int distance, int priority)
+/*    */   {
+/* 23 */     this.relation = relation;
+/* 24 */     this.childNode = childNode;
+/* 25 */     this.childNode.setParentNode(parentNode);
+/* 26 */     this.distance = distance;
+/* 27 */     this.priority = priority;
+/*    */   }
+/*    */ 
+/*    */   public String getRelation()
+/*    */   {
+/* 36 */     return this.relation;
+/*    */   }
+/*    */ 
+/*    */   public void setRelation(String relation)
+/*    */   {
+/* 45 */     this.relation = relation;
+/*    */   }
+/*    */ 
+/*    */   public ParseTreeNode getChildNode()
+/*    */   {
+/* 54 */     return this.childNode;
+/*    */   }
+/*    */ 
+/*    */   public void setChildNode(ParseTreeNode childNode)
+/*    */   {
+/* 63 */     this.childNode = childNode;
+/*    */   }
+/*    */ 
+/*    */   public int getFromId()
+/*    */   {
+/* 69 */     return this.childNode.getParentNode().getId();
+/*    */   }
+/*    */ 
+/*    */   public int getToId()
+/*    */   {
+/* 75 */     return this.childNode.getId();
+/*    */   }
+/*    */ 
+/*    */   public int getDistance()
+/*    */   {
+/* 81 */     return this.distance;
+/*    */   }
+/*    */ 
+/*    */   public void setDistance(int distance)
+/*    */   {
+/* 87 */     this.distance = distance;
+/*    */   }
+/*    */ 
+/*    */   public int getPriority()
+/*    */   {
+/* 93 */     return this.priority;
+/*    */   }
+/*    */ 
+/*    */   public void setPriority(int priority)
+/*    */   {
+/* 99 */     this.priority = priority;
+/*    */   }
+/*    */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.sp.ParseTreeEdge
+ * JD-Core Version:    0.6.1
+ */

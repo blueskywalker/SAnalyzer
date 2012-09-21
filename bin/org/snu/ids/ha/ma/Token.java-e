@@ -1,0 +1,130 @@
+/*     */ package org.snu.ids.ha.ma;
+/*     */ 
+/*     */ import java.io.Serializable;
+/*     */ 
+/*     */ public class Token
+/*     */   implements Serializable, Comparable<Token>
+/*     */ {
+/*  17 */   protected String string = null;
+/*  18 */   protected CharSetType charSet = CharSetType.ETC;
+/*  19 */   protected int index = 0;
+/*     */ 
+/*     */   protected Token()
+/*     */   {
+/*     */   }
+/*     */ 
+/*     */   protected Token(String string, CharSetType tokenType)
+/*     */   {
+/*  42 */     this(string, tokenType, 0);
+/*     */   }
+/*     */ 
+/*     */   public Token(String string, CharSetType charSet, int index)
+/*     */   {
+/*  54 */     setString(string);
+/*  55 */     setCharSet(charSet);
+/*  56 */     setIndex(index);
+/*     */   }
+/*     */ 
+/*     */   public Object clone()
+/*     */   {
+/*  70 */     return new Token(this);
+/*     */   }
+/*     */ 
+/*     */   public boolean equals(String string)
+/*     */   {
+/*  85 */     return (this.string != null) && (string != null) && (this.string.equals(string));
+/*     */   }
+/*     */ 
+/*     */   public Token(Token token)
+/*     */   {
+/*  99 */     this(token.string, token.charSet, token.index);
+/*     */   }
+/*     */ 
+/*     */   public CharSetType getCharSet()
+/*     */   {
+/* 108 */     return this.charSet;
+/*     */   }
+/*     */ 
+/*     */   public String getCharSetName()
+/*     */   {
+/* 122 */     return getCharSet(this.charSet);
+/*     */   }
+/*     */ 
+/*     */   public int getIndex()
+/*     */   {
+/* 131 */     return this.index;
+/*     */   }
+/*     */ 
+/*     */   public String getString()
+/*     */   {
+/* 140 */     return this.string;
+/*     */   }
+/*     */ 
+/*     */   public void setCharSet(CharSetType charSet)
+/*     */   {
+/* 149 */     this.charSet = charSet;
+/*     */   }
+/*     */ 
+/*     */   public void setIndex(int index)
+/*     */   {
+/* 158 */     this.index = index;
+/*     */   }
+/*     */ 
+/*     */   public void setString(String string)
+/*     */   {
+/* 167 */     this.string = string;
+/*     */   }
+/*     */ 
+/*     */   public boolean isCharSetOf(CharSetType charSet)
+/*     */   {
+/* 182 */     return this.charSet == charSet;
+/*     */   }
+/*     */ 
+/*     */   public String toString()
+/*     */   {
+/* 196 */     return "(" + this.index + "," + this.string + "," + getCharSet(this.charSet) + ")";
+/*     */   }
+/*     */ 
+/*     */   public static String getCharSet(CharSetType tokenType)
+/*     */   {
+/* 211 */     if (CharSetType.SPACE == tokenType)
+/* 212 */       return "Space";
+/* 213 */     if (CharSetType.HANGUL == tokenType)
+/* 214 */       return "Hangul";
+/* 215 */     if (CharSetType.ENGLISH == tokenType)
+/* 216 */       return "English";
+/* 217 */     if (CharSetType.ETC == tokenType)
+/* 218 */       return "Etc";
+/* 219 */     if (CharSetType.NUMBER == tokenType)
+/* 220 */       return "Number";
+/* 221 */     if (CharSetType.HANMUN == tokenType)
+/* 222 */       return "Hanmun";
+/* 223 */     if (CharSetType.SYMBOL == tokenType)
+/* 224 */       return "Symbol";
+/* 225 */     if (CharSetType.EMOTICON == tokenType)
+/* 226 */       return "Emoticon";
+/* 227 */     if (CharSetType.COMBINED == tokenType) {
+/* 228 */       return "Combined";
+/*     */     }
+/* 230 */     return "Undefined";
+/*     */   }
+/*     */ 
+/*     */   public Token copy()
+/*     */   {
+/* 236 */     Token copy = new Token();
+/* 237 */     copy.string = this.string;
+/* 238 */     copy.charSet = this.charSet;
+/* 239 */     copy.index = this.index;
+/* 240 */     return copy;
+/*     */   }
+/*     */ 
+/*     */   public int compareTo(Token tk)
+/*     */   {
+/* 255 */     return this.index - tk.index;
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.ma.Token
+ * JD-Core Version:    0.6.1
+ */

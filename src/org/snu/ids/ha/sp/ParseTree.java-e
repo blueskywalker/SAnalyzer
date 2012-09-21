@@ -1,0 +1,59 @@
+/*    */ package org.snu.ids.ha.sp;
+/*    */ 
+/*    */ import java.util.ArrayList;
+/*    */ import java.util.List;
+/*    */ 
+/*    */ public class ParseTree
+/*    */ {
+/* 23 */   String sentenec = null;
+/* 24 */   ParseTreeNode root = new ParseTreeNode(null);
+/* 25 */   List<ParseTreeNode> nodeList = null;
+/* 26 */   List<ParseTreeEdge> edgeList = null;
+/*    */ 
+/*    */   public void setRoot(ParseTreeNode ptn)
+/*    */   {
+/* 31 */     this.root.addChildEdge(new ParseTreeEdge("연결", ptn, this.root, 1, 1));
+/*    */   }
+/*    */ 
+/*    */   public void traverse(StringBuffer sb)
+/*    */   {
+/* 37 */     this.root.traverse(0, null, sb);
+/*    */   }
+/*    */ 
+/*    */   public void setId()
+/*    */   {
+/* 43 */     this.root.traverse(0);
+/*    */   }
+/*    */ 
+/*    */   public void setAllList()
+/*    */   {
+/* 49 */     this.nodeList = new ArrayList();
+/* 50 */     this.edgeList = new ArrayList();
+/* 51 */     this.root.traverse(this.nodeList, this.edgeList);
+/*    */   }
+/*    */ 
+/*    */   public List<ParseTreeNode> getNodeList()
+/*    */   {
+/* 57 */     return this.nodeList;
+/*    */   }
+/*    */ 
+/*    */   public List<ParseTreeEdge> getEdgeList()
+/*    */   {
+/* 63 */     return this.edgeList;
+/*    */   }
+/*    */ 
+/*    */   public String getSentenec()
+/*    */   {
+/* 72 */     return this.sentenec;
+/*    */   }
+/*    */ 
+/*    */   public void setSentenec(String sentenec)
+/*    */   {
+/* 81 */     this.sentenec = sentenec;
+/*    */   }
+/*    */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.sp.ParseTree
+ * JD-Core Version:    0.6.1
+ */

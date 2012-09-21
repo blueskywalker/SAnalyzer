@@ -1,0 +1,164 @@
+/*     */ package org.snu.ids.ha.constants;
+/*     */ 
+/*     */ import java.util.Hashtable;
+/*     */ 
+/*     */ public class Symbol
+/*     */ {
+/*  22 */   private static final Hashtable<String, Long> SYMBOL_TYPE_HASH = new Hashtable();
+/*     */ 
+/*     */   static
+/*     */   {
+/*  26 */     SYMBOL_TYPE_HASH.put("...", Long.valueOf(POSTag.SE));
+/*  27 */     SYMBOL_TYPE_HASH.put("‥", Long.valueOf(POSTag.SE));
+/*  28 */     SYMBOL_TYPE_HASH.put("…", Long.valueOf(POSTag.SE));
+/*     */ 
+/*  31 */     SYMBOL_TYPE_HASH.put("!", Long.valueOf(POSTag.SF));
+/*  32 */     SYMBOL_TYPE_HASH.put(".", Long.valueOf(POSTag.SF));
+/*  33 */     SYMBOL_TYPE_HASH.put("?", Long.valueOf(POSTag.SF));
+/*  34 */     SYMBOL_TYPE_HASH.put("？", Long.valueOf(POSTag.SF));
+/*     */ 
+/*  37 */     SYMBOL_TYPE_HASH.put("­", Long.valueOf(POSTag.SO));
+/*  38 */     SYMBOL_TYPE_HASH.put("~", Long.valueOf(POSTag.SO));
+/*  39 */     SYMBOL_TYPE_HASH.put("～", Long.valueOf(POSTag.SO));
+/*  40 */     SYMBOL_TYPE_HASH.put("∼", Long.valueOf(POSTag.SO));
+/*     */ 
+/*  43 */     SYMBOL_TYPE_HASH.put(",", Long.valueOf(POSTag.SP));
+/*  44 */     SYMBOL_TYPE_HASH.put("，", Long.valueOf(POSTag.SP));
+/*  45 */     SYMBOL_TYPE_HASH.put("/", Long.valueOf(POSTag.SP));
+/*  46 */     SYMBOL_TYPE_HASH.put("／", Long.valueOf(POSTag.SP));
+/*  47 */     SYMBOL_TYPE_HASH.put(":", Long.valueOf(POSTag.SP));
+/*  48 */     SYMBOL_TYPE_HASH.put("：", Long.valueOf(POSTag.SP));
+/*  49 */     SYMBOL_TYPE_HASH.put(";", Long.valueOf(POSTag.SP));
+/*  50 */     SYMBOL_TYPE_HASH.put("；", Long.valueOf(POSTag.SP));
+/*  51 */     SYMBOL_TYPE_HASH.put("·", Long.valueOf(POSTag.SP));
+/*     */ 
+/*  54 */     SYMBOL_TYPE_HASH.put("'", Long.valueOf(POSTag.SS));
+/*  55 */     SYMBOL_TYPE_HASH.put("\"", Long.valueOf(POSTag.SS));
+/*  56 */     SYMBOL_TYPE_HASH.put("(", Long.valueOf(POSTag.SS));
+/*  57 */     SYMBOL_TYPE_HASH.put(")", Long.valueOf(POSTag.SS));
+/*  58 */     SYMBOL_TYPE_HASH.put("）", Long.valueOf(POSTag.SS));
+/*  59 */     SYMBOL_TYPE_HASH.put("[", Long.valueOf(POSTag.SS));
+/*  60 */     SYMBOL_TYPE_HASH.put("]", Long.valueOf(POSTag.SS));
+/*  61 */     SYMBOL_TYPE_HASH.put("`", Long.valueOf(POSTag.SS));
+/*  62 */     SYMBOL_TYPE_HASH.put("｀", Long.valueOf(POSTag.SS));
+/*  63 */     SYMBOL_TYPE_HASH.put("{", Long.valueOf(POSTag.SS));
+/*  64 */     SYMBOL_TYPE_HASH.put("}", Long.valueOf(POSTag.SS));
+/*  65 */     SYMBOL_TYPE_HASH.put("˝", Long.valueOf(POSTag.SS));
+/*  66 */     SYMBOL_TYPE_HASH.put("‘", Long.valueOf(POSTag.SS));
+/*  67 */     SYMBOL_TYPE_HASH.put("’", Long.valueOf(POSTag.SS));
+/*  68 */     SYMBOL_TYPE_HASH.put("“", Long.valueOf(POSTag.SS));
+/*  69 */     SYMBOL_TYPE_HASH.put("”", Long.valueOf(POSTag.SS));
+/*  70 */     SYMBOL_TYPE_HASH.put("〈", Long.valueOf(POSTag.SS));
+/*  71 */     SYMBOL_TYPE_HASH.put("〉", Long.valueOf(POSTag.SS));
+/*  72 */     SYMBOL_TYPE_HASH.put("《", Long.valueOf(POSTag.SS));
+/*  73 */     SYMBOL_TYPE_HASH.put("》", Long.valueOf(POSTag.SS));
+/*  74 */     SYMBOL_TYPE_HASH.put("「", Long.valueOf(POSTag.SS));
+/*  75 */     SYMBOL_TYPE_HASH.put("」", Long.valueOf(POSTag.SS));
+/*  76 */     SYMBOL_TYPE_HASH.put("『", Long.valueOf(POSTag.SS));
+/*  77 */     SYMBOL_TYPE_HASH.put("』", Long.valueOf(POSTag.SS));
+/*  78 */     SYMBOL_TYPE_HASH.put("【", Long.valueOf(POSTag.SS));
+/*  79 */     SYMBOL_TYPE_HASH.put("】", Long.valueOf(POSTag.SS));
+/*  80 */     SYMBOL_TYPE_HASH.put("〔", Long.valueOf(POSTag.SS));
+/*  81 */     SYMBOL_TYPE_HASH.put("〕", Long.valueOf(POSTag.SS));
+/*  82 */     SYMBOL_TYPE_HASH.put("〃", Long.valueOf(POSTag.SS));
+/*  83 */     SYMBOL_TYPE_HASH.put("<", Long.valueOf(POSTag.SS));
+/*  84 */     SYMBOL_TYPE_HASH.put("＜", Long.valueOf(POSTag.SS));
+/*  85 */     SYMBOL_TYPE_HASH.put(">", Long.valueOf(POSTag.SS));
+/*  86 */     SYMBOL_TYPE_HASH.put("＞", Long.valueOf(POSTag.SS));
+/*  87 */     SYMBOL_TYPE_HASH.put("≪", Long.valueOf(POSTag.SS));
+/*  88 */     SYMBOL_TYPE_HASH.put("≫", Long.valueOf(POSTag.SS));
+/*     */ 
+/*  91 */     SYMBOL_TYPE_HASH.put("㎀", Long.valueOf(POSTag.NNM));
+/*  92 */     SYMBOL_TYPE_HASH.put("㎁", Long.valueOf(POSTag.NNM));
+/*  93 */     SYMBOL_TYPE_HASH.put("㎂", Long.valueOf(POSTag.NNM));
+/*  94 */     SYMBOL_TYPE_HASH.put("㎃", Long.valueOf(POSTag.NNM));
+/*  95 */     SYMBOL_TYPE_HASH.put("㎄", Long.valueOf(POSTag.NNM));
+/*  96 */     SYMBOL_TYPE_HASH.put("㎈", Long.valueOf(POSTag.NNM));
+/*  97 */     SYMBOL_TYPE_HASH.put("㎉", Long.valueOf(POSTag.NNM));
+/*  98 */     SYMBOL_TYPE_HASH.put("㎊", Long.valueOf(POSTag.NNM));
+/*  99 */     SYMBOL_TYPE_HASH.put("㎋", Long.valueOf(POSTag.NNM));
+/* 100 */     SYMBOL_TYPE_HASH.put("㎌", Long.valueOf(POSTag.NNM));
+/* 101 */     SYMBOL_TYPE_HASH.put("㎍", Long.valueOf(POSTag.NNM));
+/* 102 */     SYMBOL_TYPE_HASH.put("㎎", Long.valueOf(POSTag.NNM));
+/* 103 */     SYMBOL_TYPE_HASH.put("㎏", Long.valueOf(POSTag.NNM));
+/* 104 */     SYMBOL_TYPE_HASH.put("㎐", Long.valueOf(POSTag.NNM));
+/* 105 */     SYMBOL_TYPE_HASH.put("㎑", Long.valueOf(POSTag.NNM));
+/* 106 */     SYMBOL_TYPE_HASH.put("㎒", Long.valueOf(POSTag.NNM));
+/* 107 */     SYMBOL_TYPE_HASH.put("㎓", Long.valueOf(POSTag.NNM));
+/* 108 */     SYMBOL_TYPE_HASH.put("㎔", Long.valueOf(POSTag.NNM));
+/* 109 */     SYMBOL_TYPE_HASH.put("㎕", Long.valueOf(POSTag.NNM));
+/* 110 */     SYMBOL_TYPE_HASH.put("㎖", Long.valueOf(POSTag.NNM));
+/* 111 */     SYMBOL_TYPE_HASH.put("㎗", Long.valueOf(POSTag.NNM));
+/* 112 */     SYMBOL_TYPE_HASH.put("㎘", Long.valueOf(POSTag.NNM));
+/* 113 */     SYMBOL_TYPE_HASH.put("㎙", Long.valueOf(POSTag.NNM));
+/* 114 */     SYMBOL_TYPE_HASH.put("㎚", Long.valueOf(POSTag.NNM));
+/* 115 */     SYMBOL_TYPE_HASH.put("㎛", Long.valueOf(POSTag.NNM));
+/* 116 */     SYMBOL_TYPE_HASH.put("㎜", Long.valueOf(POSTag.NNM));
+/* 117 */     SYMBOL_TYPE_HASH.put("㎝", Long.valueOf(POSTag.NNM));
+/* 118 */     SYMBOL_TYPE_HASH.put("㎞", Long.valueOf(POSTag.NNM));
+/* 119 */     SYMBOL_TYPE_HASH.put("㎟", Long.valueOf(POSTag.NNM));
+/* 120 */     SYMBOL_TYPE_HASH.put("㎠", Long.valueOf(POSTag.NNM));
+/* 121 */     SYMBOL_TYPE_HASH.put("㎡", Long.valueOf(POSTag.NNM));
+/* 122 */     SYMBOL_TYPE_HASH.put("㎢", Long.valueOf(POSTag.NNM));
+/* 123 */     SYMBOL_TYPE_HASH.put("㎣", Long.valueOf(POSTag.NNM));
+/* 124 */     SYMBOL_TYPE_HASH.put("㎤", Long.valueOf(POSTag.NNM));
+/* 125 */     SYMBOL_TYPE_HASH.put("㎥", Long.valueOf(POSTag.NNM));
+/* 126 */     SYMBOL_TYPE_HASH.put("㎦", Long.valueOf(POSTag.NNM));
+/* 127 */     SYMBOL_TYPE_HASH.put("㎧", Long.valueOf(POSTag.NNM));
+/* 128 */     SYMBOL_TYPE_HASH.put("㎨", Long.valueOf(POSTag.NNM));
+/* 129 */     SYMBOL_TYPE_HASH.put("㎩", Long.valueOf(POSTag.NNM));
+/* 130 */     SYMBOL_TYPE_HASH.put("㎪", Long.valueOf(POSTag.NNM));
+/* 131 */     SYMBOL_TYPE_HASH.put("㎫", Long.valueOf(POSTag.NNM));
+/* 132 */     SYMBOL_TYPE_HASH.put("㎬", Long.valueOf(POSTag.NNM));
+/* 133 */     SYMBOL_TYPE_HASH.put("㎭", Long.valueOf(POSTag.NNM));
+/* 134 */     SYMBOL_TYPE_HASH.put("㎮", Long.valueOf(POSTag.NNM));
+/* 135 */     SYMBOL_TYPE_HASH.put("㎯", Long.valueOf(POSTag.NNM));
+/* 136 */     SYMBOL_TYPE_HASH.put("㎰", Long.valueOf(POSTag.NNM));
+/* 137 */     SYMBOL_TYPE_HASH.put("㎱", Long.valueOf(POSTag.NNM));
+/* 138 */     SYMBOL_TYPE_HASH.put("㎲", Long.valueOf(POSTag.NNM));
+/* 139 */     SYMBOL_TYPE_HASH.put("㎳", Long.valueOf(POSTag.NNM));
+/* 140 */     SYMBOL_TYPE_HASH.put("㎴", Long.valueOf(POSTag.NNM));
+/* 141 */     SYMBOL_TYPE_HASH.put("㎵", Long.valueOf(POSTag.NNM));
+/* 142 */     SYMBOL_TYPE_HASH.put("㎶", Long.valueOf(POSTag.NNM));
+/* 143 */     SYMBOL_TYPE_HASH.put("㎷", Long.valueOf(POSTag.NNM));
+/* 144 */     SYMBOL_TYPE_HASH.put("㎸", Long.valueOf(POSTag.NNM));
+/* 145 */     SYMBOL_TYPE_HASH.put("㎹", Long.valueOf(POSTag.NNM));
+/* 146 */     SYMBOL_TYPE_HASH.put("㎺", Long.valueOf(POSTag.NNM));
+/* 147 */     SYMBOL_TYPE_HASH.put("㎻", Long.valueOf(POSTag.NNM));
+/* 148 */     SYMBOL_TYPE_HASH.put("㎼", Long.valueOf(POSTag.NNM));
+/* 149 */     SYMBOL_TYPE_HASH.put("㎽", Long.valueOf(POSTag.NNM));
+/* 150 */     SYMBOL_TYPE_HASH.put("㎾", Long.valueOf(POSTag.NNM));
+/* 151 */     SYMBOL_TYPE_HASH.put("㎿", Long.valueOf(POSTag.NNM));
+/* 152 */     SYMBOL_TYPE_HASH.put("㏀", Long.valueOf(POSTag.NNM));
+/* 153 */     SYMBOL_TYPE_HASH.put("㏁", Long.valueOf(POSTag.NNM));
+/* 154 */     SYMBOL_TYPE_HASH.put("㏂", Long.valueOf(POSTag.NNM));
+/* 155 */     SYMBOL_TYPE_HASH.put("㏃", Long.valueOf(POSTag.NNM));
+/* 156 */     SYMBOL_TYPE_HASH.put("㏄", Long.valueOf(POSTag.NNM));
+/* 157 */     SYMBOL_TYPE_HASH.put("㏅", Long.valueOf(POSTag.NNM));
+/* 158 */     SYMBOL_TYPE_HASH.put("㏆", Long.valueOf(POSTag.NNM));
+/* 159 */     SYMBOL_TYPE_HASH.put("㏇", Long.valueOf(POSTag.NNM));
+/* 160 */     SYMBOL_TYPE_HASH.put("㏈", Long.valueOf(POSTag.NNM));
+/* 161 */     SYMBOL_TYPE_HASH.put("㏉", Long.valueOf(POSTag.NNM));
+/* 162 */     SYMBOL_TYPE_HASH.put("㏊", Long.valueOf(POSTag.NNM));
+/* 163 */     SYMBOL_TYPE_HASH.put("㏏", Long.valueOf(POSTag.NNM));
+/* 164 */     SYMBOL_TYPE_HASH.put("㏐", Long.valueOf(POSTag.NNM));
+/* 165 */     SYMBOL_TYPE_HASH.put("㏓", Long.valueOf(POSTag.NNM));
+/* 166 */     SYMBOL_TYPE_HASH.put("㏖", Long.valueOf(POSTag.NNM));
+/* 167 */     SYMBOL_TYPE_HASH.put("㏘", Long.valueOf(POSTag.NNM));
+/* 168 */     SYMBOL_TYPE_HASH.put("㏛", Long.valueOf(POSTag.NNM));
+/* 169 */     SYMBOL_TYPE_HASH.put("㏜", Long.valueOf(POSTag.NNM));
+/* 170 */     SYMBOL_TYPE_HASH.put("㏝", Long.valueOf(POSTag.NNM));
+/*     */   }
+/*     */ 
+/*     */   public static final long getSymbolTag(String symbol)
+/*     */   {
+/* 185 */     Long lv = (Long)SYMBOL_TYPE_HASH.get(symbol);
+/* 186 */     if (lv == null) return POSTag.SW;
+/* 187 */     return lv.longValue();
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.constants.Symbol
+ * JD-Core Version:    0.6.1
+ */

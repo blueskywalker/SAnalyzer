@@ -1,0 +1,102 @@
+/*     */ package org.snu.ids.ha.ma;
+/*     */ 
+/*     */ import java.util.StringTokenizer;
+/*     */ import org.snu.ids.ha.constants.Condition;
+/*     */ import org.snu.ids.ha.constants.POSTag;
+/*     */ 
+/*     */ public class MorphemeSpace extends Morpheme
+/*     */ {
+/*  27 */   long atlEnc = 0L;
+/*  28 */   long hclEnc = 0L;
+/*  29 */   long cclEnc = 0L;
+/*  30 */   long bclEnc = 0L;
+/*  31 */   long eclEnc = 0L;
+/*     */ 
+/*     */   protected MorphemeSpace()
+/*     */   {
+/*  36 */     super(" ", 0);
+/*  37 */     this.charSet = CharSetType.SPACE;
+/*  38 */     this.infoEnc = POSTag.SW;
+/*     */   }
+/*     */ 
+/*     */   MorphemeSpace(String source)
+/*     */   {
+/*  54 */     this();
+/*  55 */     String[] arr = source.split("/");
+/*  56 */     if (arr.length > 1) {
+/*  57 */       StringTokenizer st = new StringTokenizer(arr[1], "*#&@￢%", true);
+/*  58 */       String token = null;
+/*  59 */       while (st.hasMoreTokens()) {
+/*  60 */         token = st.nextToken();
+/*     */ 
+/*  62 */         if (token.equals("#")) {
+/*  63 */           token = st.nextToken().trim();
+/*  64 */           token = token.substring(1, token.length() - 1);
+/*  65 */           this.atlEnc = POSTag.getTagNum(token.split(","));
+/*     */         }
+/*  68 */         else if (token.equals("&")) {
+/*  69 */           token = st.nextToken().trim();
+/*  70 */           token = token.substring(1, token.length() - 1);
+/*  71 */           this.hclEnc = Condition.getCondNum(token.split(","));
+/*     */         }
+/*  74 */         else if (token.equals("@")) {
+/*  75 */           token = st.nextToken().trim();
+/*  76 */           token = token.substring(1, token.length() - 1);
+/*  77 */           this.cclEnc = Condition.getCondNum(token.split(","));
+/*     */         }
+/*  80 */         else if (token.equals("￢")) {
+/*  81 */           token = st.nextToken().trim();
+/*  82 */           token = token.substring(1, token.length() - 1);
+/*  83 */           this.eclEnc = Condition.getCondNum(token.split(","));
+/*     */         }
+/*     */       }
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   MorphemeSpace(long atlEnc, long hclEnc, long bclEnc, long cclEnc, long eclEnc)
+/*     */   {
+/* 104 */     this();
+/* 105 */     this.charSet = CharSetType.SPACE;
+/* 106 */     this.infoEnc = POSTag.SW;
+/* 107 */     this.atlEnc = atlEnc;
+/* 108 */     this.hclEnc = hclEnc;
+/* 109 */     this.bclEnc = bclEnc;
+/* 110 */     this.cclEnc = cclEnc;
+/* 111 */     this.eclEnc = eclEnc;
+/*     */   }
+/*     */ 
+/*     */   public String toString()
+/*     */   {
+/* 125 */     return " ";
+/*     */   }
+/*     */ 
+/*     */   public String getToString()
+/*     */   {
+/* 131 */     StringBuffer sb = new StringBuffer();
+/* 132 */     sb.append(this.string + "/");
+/*     */ 
+/* 135 */     String temp = POSTag.getTagStr(this.atlEnc);
+/* 136 */     if (temp != null) sb.append("#(" + temp + ")");
+/*     */ 
+/* 139 */     temp = Condition.getCondStr(this.hclEnc);
+/* 140 */     if (temp != null) sb.append("&(" + temp + ")");
+/*     */ 
+/* 143 */     temp = Condition.getCondStr(this.cclEnc);
+/* 144 */     if (temp != null) sb.append("@(" + temp + ")");
+/*     */ 
+/* 147 */     temp = Condition.getCondStr(this.eclEnc);
+/* 148 */     if (temp != null) sb.append("￢(" + temp + ")");
+/*     */ 
+/* 150 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   public Morpheme copy()
+/*     */   {
+/* 163 */     return new MorphemeSpace(this.atlEnc, this.hclEnc, this.bclEnc, this.cclEnc, this.eclEnc);
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.ma.MorphemeSpace
+ * JD-Core Version:    0.6.1
+ */

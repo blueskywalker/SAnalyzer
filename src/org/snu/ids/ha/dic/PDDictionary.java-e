@@ -1,0 +1,262 @@
+/*     */ package org.snu.ids.ha.dic;
+/*     */ 
+/*     */ import java.io.PrintStream;
+/*     */ import java.util.ArrayList;
+/*     */ import java.util.Hashtable;
+/*     */ import java.util.Iterator;
+/*     */ import org.snu.ids.ha.constants.POSTag;
+/*     */ import org.snu.ids.ha.ma.Morpheme;
+/*     */ import org.snu.ids.ha.util.Timer;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public final class PDDictionary
+/*     */ {
+/*  25 */   private static final Hashtable<Long, Float> LNPR_POS = new Hashtable(50);
+/*  26 */   private static final Hashtable<String, Float> LNPR_MORP = new Hashtable(80000);
+/*  27 */   private static final Hashtable<String, Float> LNPR_POS_G_EXP = new Hashtable(70000);
+/*  28 */   private static final Hashtable<String, Float> LNPR_POS_G_MORP_INTRA = new Hashtable(60000);
+/*  29 */   private static final Hashtable<String, Float> LNPR_POS_G_MORP_INTER = new Hashtable(520000);
+/*     */   private static final float MIN_LNPR_POS = -9.0F;
+/*     */   private static final float MIN_LNPR_MORP = -18.0F;
+/*     */ 
+/*     */   static
+/*     */   {
+/*  32 */     System.out.println("Prob Dic Loading!");
+/*  33 */     Timer timer = new Timer();
+/*  34 */     timer.start();
+/*  35 */     loadLnprPos("/dic/prob/lnpr_pos.dic");
+/*  36 */     System.out.println(LNPR_POS.size() + " loaded!");
+/*  37 */     loadLnprMorp("/dic/prob/lnpr_morp.dic");
+/*  38 */     System.out.println(LNPR_MORP.size() + " loaded!");
+/*  39 */     loadLnprPosGExp("/dic/prob/lnpr_pos_g_exp.dic");
+/*  40 */     System.out.println(LNPR_POS_G_EXP.size() + " loaded!");
+/*  41 */     loadLnprPosGMorp("/dic/prob/lnpr_pos_g_morp_intra.dic", LNPR_POS_G_MORP_INTRA);
+/*  42 */     System.out.println(LNPR_POS_G_MORP_INTRA.size() + " loaded!");
+/*  43 */     loadLnprPosGMorp("/dic/prob/lnpr_pos_g_morp_inter.dic", LNPR_POS_G_MORP_INTER);
+/*  44 */     System.out.println(LNPR_POS_G_MORP_INTER.size() + " loaded!");
+/*  45 */     timer.stop();
+/*  46 */     System.out.println("(Loading time : " + timer.getInterval() + " secs!");
+/*     */   }
+/*     */ 
+/*     */   private static final void loadLnprPos(String fileName)
+/*     */   {
+/*  52 */     ProbDicReader dr = null;
+/*     */     try {
+/*  54 */       dr = new ProbDicReader(fileName);
+/*  55 */       String[] arr = (String[])null;
+/*  56 */       while ((arr = dr.read()) != null) {
+/*  57 */         long pos = POSTag.getTagNum(arr[0]);
+/*  58 */         float lnpr = Float.parseFloat(arr[1]);
+/*  59 */         LNPR_POS.put(Long.valueOf(pos), Float.valueOf(lnpr));
+/*     */       }
+/*  61 */       dr.close();
+/*     */     } catch (Exception e) {
+/*  63 */       e.printStackTrace();
+/*  64 */       System.err.println(dr.line);
+/*  65 */       System.err.println("Loading error: " + fileName);
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   private static final void loadLnprMorp(String fileName)
+/*     */   {
+/*  72 */     ProbDicReader dr = null;
+/*     */     try {
+/*  74 */       dr = new ProbDicReader(fileName);
+/*  75 */       String[] arr = (String[])null;
+/*  76 */       while ((arr = dr.read()) != null) {
+/*  77 */         String exp = arr[0];
+/*  78 */         long pos = POSTag.getTagNum(arr[1]);
+/*  79 */         float lnpr = Float.parseFloat(arr[2]);
+/*  80 */         LNPR_MORP.put(exp + ":" + pos, Float.valueOf(lnpr));
+/*     */       }
+/*  82 */       dr.close();
+/*     */     } catch (Exception e) {
+/*  84 */       e.printStackTrace();
+/*  85 */       System.err.println(dr.line);
+/*  86 */       System.err.println("Loading error: " + fileName);
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   private static final void loadLnprPosGExp(String fileName)
+/*     */   {
+/*  93 */     ProbDicReader dr = null;
+/*     */     try {
+/*  95 */       dr = new ProbDicReader(fileName);
+/*  96 */       String[] arr = (String[])null;
+/*  97 */       while ((arr = dr.read()) != null) {
+/*  98 */         String exp = arr[0];
+/*  99 */         long pos = POSTag.getTagNum(arr[1]);
+/* 100 */         float lnpr = Float.parseFloat(arr[2]);
+/* 101 */         LNPR_POS_G_EXP.put(pos + "|" + exp, Float.valueOf(lnpr));
+/*     */       }
+/* 103 */       dr.close();
+/*     */     } catch (Exception e) {
+/* 105 */       e.printStackTrace();
+/* 106 */       System.err.println(dr.line);
+/* 107 */       System.err.println("Loading error: " + fileName);
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   private static final void loadLnprPosGMorp(String fileName, Hashtable<String, Float> probMap)
+/*     */   {
+/* 114 */     ProbDicReader dr = null;
+/*     */     try {
+/* 116 */       dr = new ProbDicReader(fileName);
+/* 117 */       String[] arr = (String[])null;
+/* 118 */       while ((arr = dr.read()) != null)
+/*     */       {
+/* 120 */         if (arr.length == 4) {
+/* 121 */           long prevPos = POSTag.getTagNum(arr[0]);
+/* 122 */           String exp = arr[1];
+/* 123 */           long pos = POSTag.getTagNum(arr[2]);
+/* 124 */           float lnpr = Float.parseFloat(arr[3]);
+/* 125 */           probMap.put(getKey(prevPos, exp, pos), Float.valueOf(lnpr));
+/*     */         }
+/* 128 */         else if (arr.length == 3) {
+/* 129 */           long prevPos = POSTag.getTagNum(arr[0]);
+/* 130 */           long pos = POSTag.getTagNum(arr[1]);
+/* 131 */           float lnpr = Float.parseFloat(arr[2]);
+/* 132 */           probMap.put(getKey(prevPos, null, pos), Float.valueOf(lnpr));
+/*     */         }
+/*     */       }
+/*     */ 
+/* 136 */       dr.close();
+/*     */     } catch (Exception e) {
+/* 138 */       e.printStackTrace();
+/* 139 */       System.err.println(dr.line);
+/* 140 */       System.err.println("Loading error: " + fileName);
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   static final String getKey(long prevPos, String exp, long pos)
+/*     */   {
+/* 147 */     return prevPos + "|" + exp + ":" + pos;
+/*     */   }
+/*     */ 
+/*     */   public static float getLnprPos(long pos)
+/*     */   {
+/* 166 */     Float lnpr = (Float)LNPR_POS.get(Long.valueOf(getPrTag(pos)));
+/* 167 */     if (lnpr == null) {
+/* 168 */       return -9.0F;
+/*     */     }
+/* 170 */     return lnpr.floatValue();
+/*     */   }
+/*     */ 
+/*     */   private static float getLnprMorp(String exp, long pos)
+/*     */   {
+/* 186 */     Float lnpr = (Float)LNPR_MORP.get(exp + ":" + getPrTag(pos));
+/* 187 */     if (lnpr == null) {
+/* 188 */       return -18.0F;
+/*     */     }
+/* 190 */     return lnpr.floatValue();
+/*     */   }
+/*     */ 
+/*     */   public static float getLnprPosGExp(String exp, long pos)
+/*     */   {
+/* 206 */     Float lnpr = (Float)LNPR_POS_G_EXP.get(getPrTag(pos) + "|" + exp);
+/* 207 */     if (lnpr == null) {
+/* 208 */       return getLnprPos(pos);
+/*     */     }
+/* 210 */     return lnpr.floatValue();
+/*     */   }
+/*     */ 
+/*     */   public static float getLnprPosGMorpIntra(long prevPos, String exp, long pos)
+/*     */   {
+/* 216 */     return getLnprPosGMorp(LNPR_POS_G_MORP_INTRA, prevPos, exp, pos);
+/*     */   }
+/*     */ 
+/*     */   public static float getLnprPosGMorpInter(long prevPos, String exp, long pos)
+/*     */   {
+/* 222 */     return getLnprPosGMorp(LNPR_POS_G_MORP_INTER, prevPos, exp, pos);
+/*     */   }
+/*     */ 
+/*     */   private static float getLnprPosGMorp(Hashtable<String, Float> lnprMap, long prevPos, String exp, long pos)
+/*     */   {
+/* 240 */     Float lnpr = (Float)lnprMap.get(getKey(getPrTag(prevPos), exp, getPrTag(pos)));
+/* 241 */     if ((lnpr == null) && (getLnprMorp(exp, pos) < -14.0F)) {
+/* 242 */       lnpr = (Float)lnprMap.get(getKey(getPrTag(prevPos), null, getPrTag(pos)));
+/*     */     }
+/* 244 */     if (lnpr == null) return -18.0F;
+/* 245 */     return lnpr.floatValue();
+/*     */   }
+/*     */ 
+/*     */   public static long getPrTag(long tag)
+/*     */   {
+/* 258 */     if (((POSTag.NNA | POSTag.UN) & tag) > 0L)
+/* 259 */       return POSTag.NNA;
+/* 260 */     if (((POSTag.NNM | POSTag.NNB) & tag) > 0L)
+/* 261 */       return POSTag.NNB;
+/* 262 */     if ((POSTag.VX & tag) > 0L)
+/* 263 */       return POSTag.VX;
+/* 264 */     if ((POSTag.MD & tag) > 0L)
+/* 265 */       return POSTag.MD;
+/* 266 */     if ((POSTag.EP & tag) > 0L)
+/* 267 */       return POSTag.EP;
+/* 268 */     if ((POSTag.EF & tag) > 0L)
+/* 269 */       return POSTag.EF;
+/* 270 */     if ((POSTag.EC & tag) > 0L) {
+/* 271 */       return POSTag.EC;
+/*     */     }
+/* 273 */     return tag;
+/*     */   }
+/*     */ 
+/*     */   public static float getLnpr(String morps)
+/*     */   {
+/* 279 */     float lnpr = 0.0F;
+/* 280 */     String[] arr = morps.trim().split("[+]");
+/*     */ 
+/* 282 */     ArrayList mpList = new ArrayList();
+/* 283 */     for (String temp : arr) {
+/* 284 */       if (temp.equals(" ")) {
+/* 285 */         mpList.add(new Morpheme(" ", POSTag.S));
+/*     */       } else {
+/* 287 */         String[] arr2 = temp.split("[/]");
+/* 288 */         mpList.add(new Morpheme(arr2[1], POSTag.getTagNum(arr2[2])));
+/*     */       }
+/*     */     }
+/*     */ 
+/* 292 */     Morpheme preMp = null;
+/* 293 */     boolean spacing = false;
+/* 294 */     System.out.println(morps);
+/* 295 */     for (??? = mpList.iterator(); ((Iterator)???).hasNext(); ) { Morpheme curMp = (Morpheme)((Iterator)???).next();
+/*     */ 
+/* 297 */       if (curMp.getString().equals(" ")) {
+/* 298 */         spacing = true;
+/*     */       }
+/*     */       else
+/*     */       {
+/* 302 */         float lnprPosGExp = getLnprPosGExp(curMp.getString(), curMp.getTagNum());
+/* 303 */         float lnprPosGMorp = 0.0F;
+/* 304 */         float lnprPos = 0.0F;
+/* 305 */         if (preMp != null) {
+/* 306 */           if (spacing)
+/* 307 */             lnprPosGMorp = getLnprPosGMorpInter(preMp.getTagNum(), curMp.getString(), curMp.getTagNum());
+/*     */           else {
+/* 309 */             lnprPosGMorp = getLnprPosGMorpIntra(preMp.getTagNum(), curMp.getString(), curMp.getTagNum());
+/*     */           }
+/* 311 */           lnprPos = getLnprPos(preMp.getTagNum());
+/*     */         }
+/*     */ 
+/* 314 */         lnpr += lnprPosGExp;
+/* 315 */         lnpr += lnprPosGMorp;
+/*     */ 
+/* 317 */         System.out.println("\t" + Util.getTabbedString(curMp.getSmplStr(), 4, 8) + String.format("%10.3f%10s%10.3f%10.3f", new Object[] { Float.valueOf(lnprPosGExp), Boolean.valueOf(spacing), Float.valueOf(lnprPosGMorp), Float.valueOf(lnprPos) }));
+/*     */ 
+/* 319 */         spacing = false;
+/* 320 */         preMp = curMp;
+/*     */       }
+/*     */     }
+/* 323 */     return lnpr;
+/*     */   }
+/*     */ 
+/*     */   public static void main(String[] args)
+/*     */   {
+/* 329 */     System.out.println(getLnpr("42/무리/NNG+ +44/일수/NNG+ +46/있/VV+47/다/EFN"));
+/* 330 */     System.out.println(getLnpr("42/무리/NNG+44/이/VCP+45/ㄹ/ETD+ +45/수/NNB+ +46/있/VV+47/다/EFN"));
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.dic.PDDictionary
+ * JD-Core Version:    0.6.1
+ */

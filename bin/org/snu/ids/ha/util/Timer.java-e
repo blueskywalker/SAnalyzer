@@ -1,0 +1,55 @@
+/*    */ package org.snu.ids.ha.util;
+/*    */ 
+/*    */ import java.io.PrintStream;
+/*    */ 
+/*    */ public class Timer
+/*    */ {
+/* 12 */   long startTime = 0L;
+/* 13 */   long endTime = 0L;
+/*    */ 
+/*    */   public void start()
+/*    */   {
+/* 22 */     this.startTime = System.currentTimeMillis();
+/*    */   }
+/*    */ 
+/*    */   public void stop()
+/*    */   {
+/* 32 */     this.endTime = System.currentTimeMillis();
+/*    */   }
+/*    */ 
+/*    */   public long getStartTime()
+/*    */   {
+/* 42 */     return this.startTime;
+/*    */   }
+/*    */ 
+/*    */   public long getEndTime()
+/*    */   {
+/* 52 */     return this.endTime;
+/*    */   }
+/*    */ 
+/*    */   public double getInterval()
+/*    */   {
+/* 62 */     return getIntervalL() / 1000.0D;
+/*    */   }
+/*    */ 
+/*    */   public long getIntervalL()
+/*    */   {
+/* 77 */     if (this.startTime < this.endTime) return this.endTime - this.startTime;
+/* 78 */     return 0L;
+/*    */   }
+/*    */ 
+/*    */   public void printMsg(String msg)
+/*    */   {
+/*    */     try
+/*    */     {
+/* 89 */       System.out.println(msg + "::" + getInterval() + " seconds");
+/*    */     } catch (Exception e) {
+/* 91 */       System.err.println("print error [" + msg + "]");
+/*    */     }
+/*    */   }
+/*    */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.util.Timer
+ * JD-Core Version:    0.6.1
+ */

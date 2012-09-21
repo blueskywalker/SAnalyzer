@@ -1,0 +1,200 @@
+/*     */ package org.snu.ids.ha.ma;
+/*     */ 
+/*     */ import java.util.ArrayList;
+/*     */ import org.snu.ids.ha.constants.POSTag;
+/*     */ import org.snu.ids.ha.constants.Symbol;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public class Morpheme extends Token
+/*     */ {
+/*  44 */   protected long infoEnc = 0L;
+/*     */ 
+/*  52 */   ArrayList<String> compNounList = null;
+/*     */ 
+/*     */   protected Morpheme()
+/*     */   {
+/*     */   }
+/*     */ 
+/*     */   public Morpheme(String string, int index)
+/*     */   {
+/*  79 */     this.index = index;
+/*  80 */     this.string = string;
+/*  81 */     this.charSet = CharSetType.HANGUL;
+/*  82 */     this.infoEnc = POSTag.UN;
+/*     */   }
+/*     */ 
+/*     */   public Morpheme(String string, long tagNum)
+/*     */   {
+/*  88 */     this.string = string;
+/*  89 */     this.charSet = CharSetType.HANGUL;
+/*  90 */     this.infoEnc = tagNum;
+/*     */   }
+/*     */ 
+/*     */   public Morpheme(String string, String tag, String compType)
+/*     */   {
+/* 106 */     this.string = string;
+/* 107 */     this.charSet = CharSetType.HANGUL;
+/* 108 */     this.infoEnc = POSTag.getTagNum(tag);
+/* 109 */     setComposed(compType);
+/*     */   }
+/*     */ 
+/*     */   public Morpheme(Token token)
+/*     */   {
+/* 123 */     this.index = token.index;
+/* 124 */     this.string = token.string;
+/* 125 */     this.charSet = token.charSet;
+/*     */ 
+/* 128 */     if (token.isCharSetOf(CharSetType.HANGUL)) {
+/* 129 */       this.infoEnc = POSTag.UN;
+/*     */     }
+/* 132 */     else if (token.isCharSetOf(CharSetType.NUMBER)) {
+/* 133 */       this.infoEnc = POSTag.NR;
+/*     */     }
+/* 136 */     else if ((token.isCharSetOf(CharSetType.ENGLISH)) || (token.isCharSetOf(CharSetType.COMBINED))) {
+/* 137 */       this.infoEnc = POSTag.OL;
+/*     */     }
+/* 140 */     else if (token.isCharSetOf(CharSetType.HANMUN)) {
+/* 141 */       this.infoEnc = POSTag.OH;
+/*     */     }
+/* 144 */     else if (token.isCharSetOf(CharSetType.EMOTICON)) {
+/* 145 */       this.infoEnc = POSTag.EMO;
+/*     */     }
+/*     */     else
+/*     */     {
+/* 149 */       this.infoEnc = Symbol.getSymbolTag(token.string);
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   public Morpheme(Morpheme mp)
+/*     */   {
+/* 164 */     this.index = mp.index;
+/* 165 */     this.string = mp.string;
+/* 166 */     this.charSet = mp.charSet;
+/* 167 */     this.infoEnc = mp.infoEnc;
+/*     */   }
+/*     */ 
+/*     */   public String getTag()
+/*     */   {
+/* 176 */     return POSTag.getTag(getTagNum());
+/*     */   }
+/*     */ 
+/*     */   public void setTag(String tag)
+/*     */   {
+/* 190 */     setTag(POSTag.getTagNum(tag));
+/*     */   }
+/*     */ 
+/*     */   public void setTag(long tagNum)
+/*     */   {
+/* 204 */     this.infoEnc = (this.infoEnc & 0x0 | 0xFFFFFFFF & tagNum);
+/*     */   }
+/*     */ 
+/*     */   public long getTagNum()
+/*     */   {
+/* 218 */     return this.infoEnc & 0xFFFFFFFF;
+/*     */   }
+/*     */ 
+/*     */   public boolean isComposed()
+/*     */   {
+/* 227 */     return this.infoEnc < 0L;
+/*     */   }
+/*     */ 
+/*     */   public String getComposed()
+/*     */   {
+/* 243 */     return isComposed() ? "C" : "S";
+/*     */   }
+/*     */ 
+/*     */   public void setComposed(boolean composed)
+/*     */   {
+/* 255 */     if (composed)
+/* 256 */       this.infoEnc |= -9223372036854775808L;
+/*     */     else
+/* 258 */       this.infoEnc &= 9223372036854775807L;
+/*     */   }
+/*     */ 
+/*     */   public void setComposed(String compType)
+/*     */   {
+/* 268 */     setComposed((Util.valid(compType)) && (compType.equals("C")));
+/*     */   }
+/*     */ 
+/*     */   public boolean isTag(long tagNum)
+/*     */   {
+/* 283 */     return getTagNum() == tagNum;
+/*     */   }
+/*     */ 
+/*     */   public boolean isTagOf(long tagNum)
+/*     */   {
+/* 299 */     return (this.infoEnc & 0xFFFFFFFF & tagNum) > 0L;
+/*     */   }
+/*     */ 
+/*     */   public void append(Morpheme mp)
+/*     */   {
+/* 314 */     if (mp.isTag(POSTag.XSM)) {
+/* 315 */       setTag(POSTag.MAG);
+/*     */     }
+/* 318 */     else if (!mp.isTag(POSTag.EFR)) {
+/* 319 */       setTag(mp.getTagNum());
+/*     */     }
+/* 322 */     else if ((mp.isTag(POSTag.EFR)) && (isTagOf(POSTag.EC)) && (
+/* 323 */       (this.string.equals("아")) || (this.string.equals("어")) || (this.string.equals("구")) || (this.string.equals("고"))))
+/*     */     {
+/* 325 */       setTag(POSTag.EFN);
+/*     */     }
+/* 327 */     this.string += mp.string;
+/* 328 */     setComposed(false);
+/*     */   }
+/*     */ 
+/*     */   public Morpheme copy()
+/*     */   {
+/* 342 */     Morpheme copy = new Morpheme();
+/* 343 */     copy.string = this.string;
+/* 344 */     copy.charSet = this.charSet;
+/* 345 */     copy.index = this.index;
+/* 346 */     copy.infoEnc = this.infoEnc;
+/* 347 */     return copy;
+/*     */   }
+/*     */ 
+/*     */   static Morpheme create(String source)
+/*     */   {
+/* 361 */     Morpheme ret = null;
+/* 362 */     if (source.startsWith("/")) {
+/* 363 */       ret = new Morpheme("/", "SY", null);
+/*     */     } else {
+/* 365 */       String[] arr = source.split("/");
+/* 366 */       ret = new Morpheme(arr[0], arr[1], arr.length > 2 ? arr[2] : null);
+/*     */     }
+/* 368 */     return ret;
+/*     */   }
+/*     */ 
+/*     */   public String toString()
+/*     */   {
+/* 382 */     StringBuffer sb = new StringBuffer();
+/* 383 */     sb.append(this.index + "/" + this.string + "/" + getTag() + (isComposed() ? "/C" : ""));
+/* 384 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   public String getSmplStr()
+/*     */   {
+/* 398 */     StringBuffer sb = new StringBuffer();
+/* 399 */     sb.append(this.string + "/" + getTag());
+/* 400 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   public String getSmplStr2()
+/*     */   {
+/* 414 */     StringBuffer sb = new StringBuffer();
+/* 415 */     sb.append(this.string + "/" + getTag() + (isComposed() ? "/C" : ""));
+/* 416 */     return sb.toString();
+/*     */   }
+/*     */ 
+/*     */   String getEncStr()
+/*     */   {
+/* 430 */     StringBuffer sb = new StringBuffer();
+/* 431 */     sb.append(this.string + "/" + this.infoEnc);
+/* 432 */     return sb.toString();
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.ma.Morpheme
+ * JD-Core Version:    0.6.1
+ */

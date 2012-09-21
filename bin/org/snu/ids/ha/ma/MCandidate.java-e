@@ -1,0 +1,1221 @@
+/*      */ package org.snu.ids.ha.ma;
+/*      */ 
+/*      */ import java.util.ArrayList;
+/*      */ import java.util.List;
+/*      */ import java.util.StringTokenizer;
+/*      */ import org.snu.ids.ha.constants.Condition;
+/*      */ import org.snu.ids.ha.constants.POSTag;
+/*      */ import org.snu.ids.ha.dic.Dictionary;
+/*      */ import org.snu.ids.ha.dic.PDDictionary;
+/*      */ import org.snu.ids.ha.dic.SpacingPDDictionary;
+/*      */ import org.snu.ids.ha.dic.UNPDDictionary;
+/*      */ import org.snu.ids.ha.util.Hangul;
+/*      */ import org.snu.ids.ha.util.StringSet;
+/*      */ import org.snu.ids.ha.util.Util;
+/*      */ 
+/*      */ public class MCandidate extends MorphemeList
+/*      */   implements Comparable<MCandidate>
+/*      */ {
+/*   36 */   long atlEnc = 0L;
+/*   37 */   long hclEnc = 0L;
+/*   38 */   long cclEnc = 0L;
+/*   39 */   long eclEnc = 0L;
+/*   40 */   long bclEnc = 0L;
+/*      */ 
+/*   54 */   byte realDicLen = 0;
+/*   55 */   byte candDicLen = 0;
+/*   56 */   byte numOfApndblMC = 0;
+/*      */ 
+/*   63 */   MCandidate prevBestMC = null;
+/*   64 */   int diclenOfBestMC = 0;
+/*   65 */   float spacingLnprOfBestMC = 0.0F;
+/*   66 */   float taggingLnprOfBestMC = 0.0F;
+/*      */ 
+/*   77 */   private ArrayList<String> expList = null;
+/*      */ 
+/*   88 */   int hashCode = 0;
+/*      */ 
+/*   97 */   float lnprOfSpacing = 0.0F;
+/*      */ 
+/*  105 */   float lnprOfTagging = 0.0F;
+/*      */   public static final String DLMT_ATL = "#";
+/*      */   public static final String DLMT_HCL = "&";
+/*      */   public static final String DLMT_BCL = "~";
+/*      */   public static final String DLMT_CCL = "@";
+/*      */   public static final String DLMT_ECL = "￢";
+/*      */   public static final String DLMT_PCL = "%";
+/*      */   public static final String DLMT_CNL = "$";
+/*      */ 
+/*      */   private MCandidate()
+/*      */   {
+/*  119 */     this.expList = new ArrayList();
+/*      */   }
+/*      */ 
+/*      */   MCandidate(String string, int index)
+/*      */     throws Exception
+/*      */   {
+/*  136 */     this();
+/*  137 */     add(new Morpheme(string, index));
+/*  138 */     initConds(string);
+/*  139 */     setExp(string);
+/*  140 */     calcHashCode();
+/*      */ 
+/*  142 */     this.lnprOfTagging = UNPDDictionary.getProb(string);
+/*      */ 
+/*  144 */     calcLnprOfSpacing();
+/*      */   }
+/*      */ 
+/*      */   MCandidate(String string, String tag, String compType)
+/*      */     throws Exception
+/*      */   {
+/*  162 */     this();
+/*  163 */     add(new Morpheme(string, tag, compType));
+/*  164 */     initConds(string);
+/*  165 */     setExp(string);
+/*  166 */     this.realDicLen = (byte)string.length();
+/*      */   }
+/*      */ 
+/*      */   public MCandidate(String string, String tag)
+/*      */     throws Exception
+/*      */   {
+/*  183 */     this();
+/*  184 */     add(new Morpheme(string, tag, "S"));
+/*  185 */     initConds(string);
+/*  186 */     setExp(string);
+/*      */   }
+/*      */ 
+/*      */   MCandidate(Token token)
+/*      */     throws Exception
+/*      */   {
+/*  201 */     this();
+/*  202 */     if (token.isCharSetOf(CharSetType.HANGUL)) {
+/*  203 */       throw new Exception("Token이 한글입니다.");
+/*      */     }
+/*      */ 
+/*  206 */     add(new Morpheme(token));
+/*  207 */     this.realDicLen = (byte)token.string.length();
+/*  208 */     setExp(token.string);
+/*  209 */     initConds();
+/*      */   }
+/*      */ 
+/*      */   public String getTag()
+/*      */   {
+/*  224 */     if (size() == 1) {
+/*  225 */       return ((Morpheme)get(0)).getTag();
+/*      */     }
+/*  227 */     return null;
+/*      */   }
+/*      */ 
+/*      */   public boolean isTagOf(long tags)
+/*      */   {
+/*  242 */     if (size() == 1) {
+/*  243 */       return ((Morpheme)get(0)).isTagOf(tags);
+/*      */     }
+/*  245 */     return false;
+/*      */   }
+/*      */ 
+/*      */   public String getATL()
+/*      */   {
+/*  251 */     return POSTag.getTagStr(this.atlEnc);
+/*      */   }
+/*      */ 
+/*      */   public long getATLEnc()
+/*      */   {
+/*  257 */     return this.atlEnc;
+/*      */   }
+/*      */ 
+/*      */   public String getHCL()
+/*      */   {
+/*  263 */     return Condition.getCondStr(this.hclEnc);
+/*      */   }
+/*      */ 
+/*      */   public long getHCLEnc()
+/*      */   {
+/*  269 */     return this.hclEnc;
+/*      */   }
+/*      */ 
+/*      */   public String getCCL()
+/*      */   {
+/*  275 */     return Condition.getCondStr(this.cclEnc);
+/*      */   }
+/*      */ 
+/*      */   public long getCCLEnc()
+/*      */   {
+/*  281 */     return this.cclEnc;
+/*      */   }
+/*      */ 
+/*      */   public String getECL()
+/*      */   {
+/*  287 */     return Condition.getCondStr(this.eclEnc);
+/*      */   }
+/*      */ 
+/*      */   public long getECLEnc()
+/*      */   {
+/*  293 */     return this.eclEnc;
+/*      */   }
+/*      */ 
+/*      */   public void initConds(String string)
+/*      */   {
+/*  307 */     addApndblTag(getBasicApndblTags());
+/*      */ 
+/*  309 */     initHavingCond(string);
+/*      */   }
+/*      */ 
+/*      */   public void initHavingCond(String string)
+/*      */   {
+/*  324 */     addHavingCond(getBasicPhonemeConds(string));
+/*      */ 
+/*  327 */     addHavingCond(getBasicHavingConds());
+/*      */   }
+/*      */ 
+/*      */   private void initConds()
+/*      */   {
+/*  340 */     if (!this.lastMorp.isCharSetOf(CharSetType.HANGUL)) {
+/*  341 */       if (this.lastMorp.isCharSetOf(CharSetType.ENGLISH)) {
+/*  342 */         addHavingCond(Condition.ENG);
+/*      */       }
+/*  344 */       addHavingCond(Condition.SET_FOR_UN);
+/*  345 */       addHavingCond(Condition.N);
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public long getBasicApndblTags()
+/*      */   {
+/*  360 */     long tags = 0L;
+/*      */ 
+/*  363 */     if (this.firstMorp.isTagOf(POSTag.NNA | POSTag.XR)) {
+/*  364 */       tags |= POSTag.XPN;
+/*      */     }
+/*  369 */     else if (this.firstMorp.isTagOf(POSTag.VV | POSTag.VA | POSTag.XR)) {
+/*  370 */       tags |= POSTag.XPV;
+/*      */     }
+/*  373 */     else if (this.firstMorp.isTagOf(POSTag.XSN)) {
+/*  374 */       tags |= POSTag.NNA;
+/*      */     }
+/*  377 */     else if (this.firstMorp.isTagOf(POSTag.XSA | POSTag.XSV)) {
+/*  378 */       tags |= POSTag.NN | POSTag.XR;
+/*      */     }
+/*  381 */     else if (this.firstMorp.isTagOf(POSTag.NNM | POSTag.NR)) {
+/*  382 */       tags |= POSTag.NR;
+/*      */     }
+/*  385 */     else if (this.firstMorp.isTagOf(POSTag.J)) {
+/*  386 */       tags |= POSTag.O | POSTag.NR;
+/*      */     }
+/*      */ 
+/*  389 */     return tags;
+/*      */   }
+/*      */ 
+/*      */   public long getBasicPhonemeConds(String string)
+/*      */   {
+/*  404 */     long cond = 0L;
+/*  405 */     char lastCh = string.charAt(string.length() - 1);
+/*  406 */     Hangul lastHg = Hangul.split(lastCh);
+/*      */ 
+/*  409 */     if (lastHg.hasJong())
+/*  410 */       cond |= Condition.JAEUM;
+/*      */     else {
+/*  412 */       cond |= Condition.MOEUM;
+/*      */     }
+/*      */ 
+/*  415 */     if (Hangul.MO_POSITIVE_SET.contains(lastHg.jung))
+/*  416 */       cond |= Condition.YANGSEONG;
+/*      */     else {
+/*  418 */       cond |= Condition.EUMSEONG;
+/*      */     }
+/*      */ 
+/*  423 */     if (this.lastMorp.isTagOf(POSTag.VP))
+/*      */     {
+/*  425 */       if (Hangul.MO_DOUBLE_SET.contains(lastHg.jung)) {
+/*  426 */         cond |= Condition.JAEUM;
+/*      */       }
+/*      */ 
+/*  429 */       if (lastCh == 54616) {
+/*  430 */         cond |= Condition.HA;
+/*      */       }
+/*  433 */       else if (lastCh == 44032) {
+/*  434 */         cond |= Condition.GADA;
+/*      */       }
+/*  437 */       else if (lastCh == 50724) {
+/*  438 */         cond |= Condition.ODA;
+/*      */       }
+/*  441 */       else if (lastHg.jong == 'ㄹ') {
+/*  442 */         cond |= Condition.LIEUL;
+/*      */       }
+/*      */ 
+/*      */     }
+/*  446 */     else if (this.lastMorp.isTagOf(POSTag.N))
+/*      */     {
+/*  448 */       if (lastHg.jong == 'ㄹ') {
+/*  449 */         cond |= Condition.LIEUL;
+/*      */       }
+/*      */ 
+/*      */     }
+/*  453 */     else if (this.lastMorp.isTagOf(POSTag.ET)) {
+/*  454 */       if (this.lastMorp.string.equals("ㄴ"))
+/*  455 */         cond |= Condition.NIEUN;
+/*  456 */       else if (this.lastMorp.string.equals("ㄹ"))
+/*  457 */         cond |= Condition.LIEUL;
+/*  458 */       else if (this.lastMorp.string.equals("ㅁ")) {
+/*  459 */         cond |= Condition.MIEUM;
+/*      */       }
+/*      */     }
+/*      */ 
+/*  463 */     return cond;
+/*      */   }
+/*      */ 
+/*      */   public long getBasicHavingConds()
+/*      */   {
+/*  477 */     long cond = 0L;
+/*      */ 
+/*  479 */     if (this.lastMorp.isTagOf(POSTag.N | POSTag.ETN))
+/*      */     {
+/*  481 */       cond |= Condition.N;
+/*      */     }
+/*  484 */     else if (this.lastMorp.isTagOf(POSTag.MD | POSTag.ETD)) {
+/*  485 */       cond |= Condition.D;
+/*      */     }
+/*  488 */     else if (this.lastMorp.isTagOf(POSTag.MA | POSTag.JKM)) {
+/*  489 */       cond |= Condition.A;
+/*      */     }
+/*  493 */     else if (this.lastMorp.isTagOf(POSTag.ECS | POSTag.ECD)) {
+/*  494 */       cond |= Condition.EC;
+/*      */     }
+/*      */ 
+/*  497 */     return cond;
+/*      */   }
+/*      */ 
+/*      */   public MCandidate copy()
+/*      */   {
+/*  511 */     MCandidate clone = new MCandidate();
+/*  512 */     clone.addAll(this);
+/*  513 */     clone.expList.addAll(this.expList);
+/*  514 */     clone.atlEnc = this.atlEnc;
+/*  515 */     clone.hclEnc = this.hclEnc;
+/*  516 */     clone.cclEnc = this.cclEnc;
+/*  517 */     clone.bclEnc = this.bclEnc;
+/*  518 */     clone.eclEnc = this.eclEnc;
+/*  519 */     clone.candDicLen = this.candDicLen;
+/*  520 */     clone.realDicLen = this.realDicLen;
+/*  521 */     clone.numOfApndblMC = this.numOfApndblMC;
+/*  522 */     clone.spacingLnprOfBestMC = this.spacingLnprOfBestMC;
+/*  523 */     clone.prevBestMC = this.prevBestMC;
+/*  524 */     clone.lnprOfSpacing = this.lnprOfSpacing;
+/*  525 */     clone.lnprOfTagging = this.lnprOfTagging;
+/*  526 */     clone.hashCode = this.hashCode;
+/*  527 */     return clone;
+/*      */   }
+/*      */ 
+/*      */   public void setIndex(int index)
+/*      */   {
+/*  544 */     Morpheme mp = null;
+/*  545 */     int offset = 0;
+/*  546 */     int i = 0; for (int size = size(); i < size; i++) {
+/*  547 */       mp = (Morpheme)get(i);
+/*  548 */       mp.setIndex(index + offset);
+/*  549 */       offset += mp.string.length();
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public void addAll(MorphemeList mpList)
+/*      */   {
+/*  564 */     int i = 0; for (int stop = mpList.size(); i < stop; i++)
+/*  565 */       add(((Morpheme)mpList.get(i)).copy());
+/*      */   }
+/*      */ 
+/*      */   public void addApndblTag(String tag)
+/*      */   {
+/*  580 */     addApndblTag(POSTag.getTagNum(tag));
+/*      */   }
+/*      */ 
+/*      */   public void addApndblTag(long tagNum)
+/*      */   {
+/*  594 */     this.atlEnc |= tagNum;
+/*      */   }
+/*      */ 
+/*      */   public void addApndblTags(String[] tags)
+/*      */   {
+/*  608 */     int i = 0; for (int stop = tags.length; i < stop; i++)
+/*  609 */       addApndblTag(tags[i]);
+/*      */   }
+/*      */ 
+/*      */   public void addHavingCond(String cond)
+/*      */   {
+/*  624 */     addHavingCond(Condition.getCondNum(cond));
+/*      */   }
+/*      */ 
+/*      */   public void addHavingConds(String[] conds)
+/*      */   {
+/*  638 */     int i = 0; for (int stop = conds.length; i < stop; i++)
+/*  639 */       addHavingCond(conds[i]);
+/*      */   }
+/*      */ 
+/*      */   public void addHavingCond(long condNum)
+/*      */   {
+/*  654 */     this.hclEnc |= condNum;
+/*  655 */     if ((this.lastMorp.isTag(POSTag.ETD)) && (Condition.checkAnd(this.hclEnc, Condition.NIEUN))) {
+/*  656 */       this.bclEnc |= Condition.NIEUN;
+/*  657 */     } else if ((this.lastMorp.isTag(POSTag.ETD)) && (Condition.checkAnd(this.hclEnc, Condition.LIEUL))) {
+/*  658 */       this.bclEnc |= Condition.LIEUL;
+/*  659 */     } else if ((this.lastMorp.isTagOf(POSTag.ETN)) && (Condition.checkAnd(this.hclEnc, Condition.MIEUM))) {
+/*  660 */       this.bclEnc |= Condition.MIEUM;
+/*  661 */     } else if (this.lastMorp.isTagOf(POSTag.V))
+/*      */     {
+/*  663 */       this.bclEnc |= this.hclEnc & Condition.MINUS_JA_SET;
+/*      */ 
+/*  665 */       if ((Condition.checkAnd(this.hclEnc, Condition.BIEUB)) && (!Hangul.endsWith(this.lastMorp.string, "ㅂ"))) this.bclEnc |= Condition.BIEUB;
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public boolean isHavingCond(long condNum)
+/*      */   {
+/*  681 */     return Condition.checkAnd(this.hclEnc, condNum);
+/*      */   }
+/*      */ 
+/*      */   public void clearHavingCondition()
+/*      */   {
+/*  696 */     this.hclEnc = 0L;
+/*  697 */     this.bclEnc = 0L;
+/*      */   }
+/*      */ 
+/*      */   public void addChkCond(String cond)
+/*      */   {
+/*  711 */     this.cclEnc |= Condition.getCondNum(cond);
+/*      */   }
+/*      */ 
+/*      */   void addChkConds(String[] conds)
+/*      */   {
+/*  725 */     int i = 0; for (int stop = conds.length; i < stop; i++)
+/*  726 */       addChkCond(conds[i]);
+/*      */   }
+/*      */ 
+/*      */   void addExclusionCond(String cond)
+/*      */   {
+/*  741 */     this.eclEnc |= Condition.getCondNum(cond);
+/*      */   }
+/*      */ 
+/*      */   void addExclusionConds(String[] conds)
+/*      */   {
+/*  755 */     int i = 0; for (int stop = conds.length; i < stop; i++)
+/*  756 */       addExclusionCond(conds[i]);
+/*      */   }
+/*      */ 
+/*      */   private boolean isCondExclusive(long exlCondEnc)
+/*      */   {
+/*  773 */     if (exlCondEnc == 0L) return false;
+/*  774 */     return Condition.checkOr(this.hclEnc, exlCondEnc);
+/*      */   }
+/*      */ 
+/*      */   public void setExp(String exp)
+/*      */   {
+/*  788 */     this.expList.clear();
+/*  789 */     this.expList.add(exp);
+/*      */   }
+/*      */ 
+/*      */   public String getExp()
+/*      */   {
+/*  803 */     StringBuffer sb = new StringBuffer();
+/*  804 */     int i = 0; for (int stop = this.expList.size(); i < stop; i++) {
+/*  805 */       if (i > 0) sb.append(" ");
+/*  806 */       sb.append((String)this.expList.get(i));
+/*      */     }
+/*  808 */     return sb.toString();
+/*      */   }
+/*      */ 
+/*      */   public int getSpaceCnt()
+/*      */   {
+/*  814 */     return this.expList.size() - 1;
+/*      */   }
+/*      */ 
+/*      */   public char getFirstSyllable()
+/*      */   {
+/*  820 */     String str = (String)this.expList.get(0);
+/*  821 */     return str.charAt(0);
+/*      */   }
+/*      */ 
+/*      */   public char getLastSyllable()
+/*      */   {
+/*  827 */     String str = (String)this.expList.get(this.expList.size() - 1);
+/*  828 */     return str.charAt(str.length() - 1);
+/*      */   }
+/*      */ 
+/*      */   String getExp(int toIdx)
+/*      */   {
+/*  843 */     StringBuffer sb = new StringBuffer();
+/*  844 */     int i = 0; for (int stop = Math.min(this.expList.size(), toIdx + 1); i < stop; i++) {
+/*  845 */       sb.append((String)this.expList.get(i));
+/*      */     }
+/*  847 */     return sb.toString();
+/*      */   }
+/*      */ 
+/*      */   String getHead(String head)
+/*      */   {
+/*  862 */     StringBuffer sb = new StringBuffer();
+/*  863 */     int i = 0; for (int stop = this.expList.size(); i < stop; i++) {
+/*  864 */       sb.append((String)this.expList.get(i));
+/*  865 */       if (sb.toString().equals(head)) return head;
+/*      */     }
+/*  867 */     return null;
+/*      */   }
+/*      */ 
+/*      */   String geExpStrWithSpace()
+/*      */   {
+/*  881 */     StringBuffer sb = new StringBuffer();
+/*  882 */     int i = 0; for (int stop = this.expList.size(); i < stop; i++) {
+/*  883 */       if (i > 0) sb.append(" ");
+/*  884 */       sb.append((String)this.expList.get(i));
+/*      */     }
+/*  886 */     return sb.toString();
+/*      */   }
+/*      */ 
+/*      */   public boolean isApndbl(MCandidate mcToAppend)
+/*      */   {
+/*  907 */     boolean ret = !isHavingCond(Condition.F);
+/*  908 */     if (ret) ret = this.lastMorp.isTagOf(mcToAppend.atlEnc);
+/*  909 */     if (ret) ret = Condition.checkAnd(this.hclEnc, mcToAppend.cclEnc);
+/*  910 */     if (ret) ret = !isCondExclusive(mcToAppend.eclEnc);
+/*      */ 
+/*  912 */     if ((ret) && (mcToAppend.firstMorp.isTagOf(POSTag.E))) {
+/*  913 */       ret = Condition.checkAnd(mcToAppend.cclEnc, this.bclEnc);
+/*      */     }
+/*  915 */     return ret;
+/*      */   }
+/*      */ 
+/*      */   boolean isApndblWithSpace(MCandidate mcToAppend)
+/*      */   {
+/*  934 */     if ((this.lastMorp.isTagOf(POSTag.V | POSTag.EP | POSTag.XP)) || 
+/*  936 */       (mcToAppend.firstMorp.isTagOf(POSTag.E | POSTag.XS | POSTag.VCP | POSTag.J)) || 
+/*  938 */       (mcToAppend.isHavingCond(Condition.SHORTEN)))
+/*      */     {
+/*  940 */       return false;
+/*      */     }
+/*      */ 
+/*  943 */     return true;
+/*      */   }
+/*      */ 
+/*      */   public MCandidate derive(MCandidate mcToAppend)
+/*      */   {
+/*  959 */     boolean isApndbl = isApndbl(mcToAppend);
+/*      */ 
+/*  962 */     if ((isApndbl) && (this.lastMorp.isCharSetOf(CharSetType.ENGLISH)) && 
+/*  963 */       (this.lastMorp.index + this.lastMorp.string.length() != mcToAppend.firstMorp.index)) return null;
+/*      */ 
+/*  967 */     boolean isApndblWithSpace = isApndblWithSpace(mcToAppend);
+/*      */ 
+/*  970 */     if ((!isApndbl) && (!isApndblWithSpace)) return null;
+/*      */ 
+/*  972 */     if (isApndbl)
+/*      */     {
+/*  978 */       if (((this.lastMorp.isTag(POSTag.XPN)) || (mcToAppend.firstMorp.isTag(POSTag.XSN))) && 
+/*  979 */         (Dictionary.getInstance().containNoun(this.lastMorp.string + mcToAppend.firstMorp.string))) return null;
+/*      */ 
+/*      */     }
+/*      */ 
+/*  983 */     MCandidate mcNew = new MCandidate();
+/*      */ 
+/*  986 */     mcNew = new MCandidate();
+/*  987 */     mcNew.addAll(this);
+/*  988 */     mcNew.addAll(mcToAppend);
+/*  989 */     mcNew.expList.addAll(this.expList);
+/*  990 */     mcNew.atlEnc = this.atlEnc;
+/*  991 */     mcNew.hclEnc = mcToAppend.hclEnc;
+/*  992 */     mcNew.bclEnc = mcToAppend.bclEnc;
+/*  993 */     mcNew.cclEnc = this.cclEnc;
+/*  994 */     mcNew.eclEnc = this.eclEnc;
+/*      */ 
+/*  997 */     if (!isApndbl)
+/*      */     {
+/*  999 */       mcNew.add(size(), new MorphemeSpace(mcToAppend.atlEnc, this.hclEnc, this.bclEnc, mcToAppend.cclEnc, mcToAppend.eclEnc));
+/* 1000 */       mcNew.expList.add("");
+/*      */     }
+/*      */ 
+/* 1006 */     mcNew.expList.add(
+/* 1008 */       (String)mcNew.expList.remove(mcNew.expList.size() - 1) + 
+/* 1010 */       (String)mcToAppend.expList.get(0));
+/*      */ 
+/* 1013 */     mcNew.expList.addAll(mcToAppend.expList.subList(1, mcToAppend.expList.size()));
+/*      */ 
+/* 1016 */     if (isApndbl)
+/*      */     {
+/* 1018 */       ((Morpheme)mcNew.get(size() - 1)).infoEnc &= (0x0 | mcToAppend.atlEnc);
+/*      */ 
+/* 1021 */       if ((this.lastMorp.isTagOf(POSTag.EM)) && (mcToAppend.firstMorp.isTagOf(POSTag.EM))) {
+/* 1022 */         mcNew.mergeAt(size() - 1);
+/*      */       }
+/* 1025 */       else if (mcToAppend.firstMorp.isTagOf(POSTag.XSM)) {
+/* 1026 */         mcNew.mergeAt(size() - 1);
+/*      */       }
+/*      */ 
+/*      */     }
+/*      */ 
+/* 1031 */     float lnpr = SpacingPDDictionary.getProb(getLastSyllable(), mcToAppend.getFirstSyllable(), !isApndbl);
+/*      */ 
+/* 1033 */     mcNew.setLnprOfSpacing(this.lnprOfSpacing + mcToAppend.lnprOfSpacing + lnpr);
+/* 1034 */     mcNew.calcLnprOfTagging();
+/*      */ 
+/* 1037 */     mcNew.calcLnprOfTagging();
+/*      */ 
+/* 1051 */     mcNew.calcDicLen();
+/*      */ 
+/* 1053 */     return mcNew;
+/*      */   }
+/*      */ 
+/*      */   List<MCandidate> split()
+/*      */   {
+/* 1068 */     if ((get(0) instanceof MorphemeSpace)) {
+/* 1069 */       this.expList.remove(0);
+/* 1070 */       remove(0);
+/*      */     }
+/*      */ 
+/* 1073 */     ArrayList ret = new ArrayList();
+/* 1074 */     MCandidate mc = new MCandidate();
+/* 1075 */     mc.atlEnc = this.atlEnc;
+/* 1076 */     mc.cclEnc = this.cclEnc;
+/* 1077 */     mc.eclEnc = this.eclEnc;
+/* 1078 */     Morpheme mp = null;
+/* 1079 */     int expIdx = 0;
+/* 1080 */     int i = 0; for (int stop = size(); i < stop; i++) {
+/* 1081 */       mp = (Morpheme)get(i);
+/* 1082 */       if ((mp instanceof MorphemeSpace)) {
+/* 1083 */         if (i != 0) {
+/* 1084 */           mc.setExp((String)this.expList.get(expIdx));
+/* 1085 */           MorphemeSpace mps = (MorphemeSpace)mp;
+/* 1086 */           mc.hclEnc = mps.hclEnc;
+/* 1087 */           mc.bclEnc = mps.bclEnc;
+/* 1088 */           mc.calcDicLen();
+/* 1089 */           mc.calcLnprOfSpacing();
+/* 1090 */           mc.calcLnprOfTagging();
+/* 1091 */           expIdx++;
+/* 1092 */           ret.add(mc);
+/*      */ 
+/* 1094 */           mc = new MCandidate();
+/* 1095 */           mc.atlEnc = mps.atlEnc;
+/* 1096 */           mc.cclEnc = mps.cclEnc;
+/* 1097 */           mc.eclEnc = mps.eclEnc;
+/*      */         }
+/*      */       } else mc.add(mp);
+/*      */     }
+/*      */ 
+/* 1102 */     mc.setExp((String)this.expList.get(expIdx));
+/* 1103 */     mc.hclEnc = this.hclEnc;
+/* 1104 */     mc.bclEnc = this.bclEnc;
+/* 1105 */     mc.calcDicLen();
+/* 1106 */     mc.calcLnprOfSpacing();
+/* 1107 */     mc.calcLnprOfTagging();
+/* 1108 */     ret.add(mc);
+/* 1109 */     return ret;
+/*      */   }
+/*      */ 
+/*      */   MCandidate[] divideHeadTailAt(String headStr, int headIdx, String tailStr, int tailIdx)
+/*      */     throws Exception
+/*      */   {
+/* 1130 */     int divideIdx = 0;
+/* 1131 */     boolean dividable = false;
+/* 1132 */     StringBuffer sb = new StringBuffer();
+/* 1133 */     int i = 0; for (int stop = this.expList.size(); i < stop; i++) {
+/* 1134 */       sb.append((String)this.expList.get(i));
+/* 1135 */       if (sb.toString().equals(headStr)) {
+/* 1136 */         dividable = true;
+/* 1137 */         break;
+/*      */       }
+/* 1139 */       divideIdx++;
+/*      */     }
+/* 1141 */     if (!dividable) {
+/* 1142 */       return new MCandidate[] { new MCandidate(headStr, headIdx), new MCandidate(tailStr, tailIdx) };
+/*      */     }
+/*      */ 
+/* 1146 */     MCandidate[] ret = new MCandidate[2];
+/*      */ 
+/* 1148 */     MCandidate headMC = ret[0] =  = new MCandidate();
+/* 1149 */     MCandidate tailMC = ret[1] =  = new MCandidate();
+/*      */ 
+/* 1152 */     headMC.atlEnc = this.atlEnc;
+/* 1153 */     headMC.cclEnc = this.cclEnc;
+/* 1154 */     headMC.eclEnc = this.eclEnc;
+/*      */ 
+/* 1156 */     int spaceIdx = 0;
+/* 1157 */     int idx = 0; int stop = size(); int accIdx = 0;
+/* 1158 */     for (; idx < stop; idx++) {
+/* 1159 */       Morpheme mp = (Morpheme)get(idx);
+/* 1160 */       if ((mp instanceof MorphemeSpace)) {
+/* 1161 */         if (spaceIdx < divideIdx) {
+/* 1162 */           headMC.add(mp);
+/* 1163 */           spaceIdx++;
+/*      */         }
+/*      */         else {
+/* 1166 */           int j = 0; for (int jStop = divideIdx + 1; j < jStop; j++) {
+/* 1167 */             headMC.expList.add((String)this.expList.get(j));
+/*      */           }
+/*      */ 
+/* 1170 */           MorphemeSpace mps = (MorphemeSpace)mp;
+/* 1171 */           headMC.hclEnc = mps.hclEnc;
+/* 1172 */           headMC.bclEnc = mps.bclEnc;
+/*      */ 
+/* 1175 */           tailMC.atlEnc = mps.atlEnc;
+/* 1176 */           tailMC.hclEnc = this.hclEnc;
+/* 1177 */           tailMC.bclEnc = this.bclEnc;
+/* 1178 */           tailMC.cclEnc = mps.bclEnc;
+/* 1179 */           tailMC.eclEnc = mps.eclEnc;
+/* 1180 */           idx++;
+/* 1181 */           break;
+/*      */         }
+/*      */       } else { mp.setIndex(headIdx + accIdx);
+/* 1184 */         accIdx += mp.getString().length();
+/* 1185 */         headMC.add(mp);
+/*      */       }
+/*      */     }
+/*      */ 
+/* 1189 */     if (idx < stop) {
+/* 1190 */       for (; idx < stop; idx++) {
+/* 1191 */         tailMC.add((Morpheme)get(idx));
+/*      */       }
+/*      */ 
+/* 1194 */       int i = divideIdx + 1; for (int iStop = this.expList.size(); i < iStop; i++) {
+/* 1195 */         tailMC.expList.add((String)this.expList.get(i));
+/*      */       }
+/*      */     }
+/* 1198 */     headMC.calcDicLen();
+/* 1199 */     headMC.calcLnprOfSpacing();
+/* 1200 */     headMC.calcLnprOfTagging();
+/* 1201 */     tailMC.calcDicLen();
+/* 1202 */     tailMC.calcLnprOfSpacing();
+/* 1203 */     tailMC.calcLnprOfTagging();
+/*      */ 
+/* 1205 */     return ret;
+/*      */   }
+/*      */ 
+/*      */   boolean isUNBfrOrAftrIthSpace(int idx)
+/*      */   {
+/* 1221 */     int spaceIdx = 0;
+/* 1222 */     int i = 0; for (int stop = size() - 1; i < stop; i++) {
+/* 1223 */       Morpheme mp = (Morpheme)get(i);
+/* 1224 */       if ((mp instanceof MorphemeSpace))
+/* 1225 */         if (spaceIdx != idx) {
+/* 1226 */           spaceIdx++;
+/*      */         }
+/*      */         else {
+/* 1229 */           mp = (Morpheme)get(i + 1);
+/*      */ 
+/* 1231 */           return (((Morpheme)get(i + 1)).isTag(POSTag.UN)) || 
+/* 1231 */             (((Morpheme)get(i - 1)).isTag(POSTag.UN));
+/*      */         }
+/*      */     }
+/* 1234 */     return false;
+/*      */   }
+/*      */ 
+/*      */   public int hashCode()
+/*      */   {
+/* 1249 */     return this.hashCode;
+/*      */   }
+/*      */ 
+/*      */   public void calcHashCode()
+/*      */   {
+/* 1262 */     this.hashCode = getEncStr().hashCode();
+/*      */   }
+/*      */ 
+/*      */   public boolean equals(Object obj)
+/*      */   {
+/* 1277 */     return hashCode() == obj.hashCode();
+/*      */   }
+/*      */ 
+/*      */   public int compareTo(MCandidate comp)
+/*      */   {
+/* 1294 */     if (getDicLenWithCand() != comp.getDicLenWithCand()) {
+/* 1295 */       return comp.getDicLenWithCand() - getDicLenWithCand();
+/*      */     }
+/*      */ 
+/* 1298 */     if (getLnpr() > comp.getLnpr())
+/* 1299 */       return -1;
+/* 1300 */     if (getLnpr() < comp.getLnpr()) {
+/* 1301 */       return 1;
+/*      */     }
+/* 1303 */     return 0;
+/*      */   }
+/*      */ 
+/*      */   public float getLnpr()
+/*      */   {
+/* 1309 */     return this.lnprOfSpacing + this.lnprOfTagging;
+/*      */   }
+/*      */ 
+/*      */   int getDicLenOnlyReal()
+/*      */   {
+/* 1323 */     return this.realDicLen;
+/*      */   }
+/*      */ 
+/*      */   int getDicLenWithCand()
+/*      */   {
+/* 1337 */     return this.candDicLen + this.realDicLen;
+/*      */   }
+/*      */ 
+/*      */   int getDicLenOnlyCand()
+/*      */   {
+/* 1351 */     return this.candDicLen;
+/*      */   }
+/*      */ 
+/*      */   boolean isComplete()
+/*      */     throws Exception
+/*      */   {
+/* 1366 */     return this.candDicLen == 0;
+/*      */   }
+/*      */ 
+/*      */   private void calcDicLen()
+/*      */   {
+/* 1382 */     byte size = (byte)size();
+/*      */ 
+/* 1385 */     this.realDicLen = 0;
+/* 1386 */     this.candDicLen = 0;
+/*      */ 
+/* 1388 */     int expIdx = 0;
+/* 1389 */     int nrDicLen = 0;
+/* 1390 */     boolean hasPreWord = false; boolean hasJo = false;
+/* 1391 */     boolean hasStem = false; boolean hasEP = false; boolean hasEM = false;
+/*      */ 
+/* 1393 */     Morpheme mp = null;
+/* 1394 */     int i = 0; for (int stop = size + 1; i < stop; i++) {
+/* 1395 */       if (i < size)
+/* 1396 */         mp = (Morpheme)get(i);
+/*      */       else {
+/* 1398 */         mp = null;
+/*      */       }
+/* 1400 */       if ((mp == null) || ((mp instanceof MorphemeSpace)))
+/*      */       {
+/* 1402 */         boolean complete = (!hasEP) || (!(hasStem ^ hasEM));
+/*      */ 
+/* 1404 */         complete = (complete) && ((!hasJo) || (hasPreWord));
+/*      */ 
+/* 1408 */         if (complete)
+/* 1409 */           this.realDicLen = (byte)(this.realDicLen + (((String)this.expList.get(expIdx)).length() - nrDicLen));
+/*      */         else {
+/* 1411 */           this.candDicLen = (byte)(this.candDicLen + (((String)this.expList.get(expIdx)).length() - nrDicLen));
+/*      */         }
+/*      */ 
+/* 1414 */         if (mp == null)
+/*      */         {
+/* 1417 */           if ((size == 2) && (this.lastMorp.isTagOf(POSTag.J)) && (this.firstMorp.isTag(POSTag.UN))) {
+/* 1418 */             this.candDicLen = (byte)(this.candDicLen + (nrDicLen - 1));
+/*      */           }
+/*      */ 
+/*      */         }
+/*      */ 
+/* 1423 */         hasPreWord = false;
+/* 1424 */         hasJo = false;
+/* 1425 */         hasStem = false;
+/* 1426 */         hasEP = false;
+/* 1427 */         hasEM = false;
+/* 1428 */         nrDicLen = 0;
+/*      */ 
+/* 1431 */         expIdx++;
+/*      */       }
+/* 1436 */       else if (mp.isTagOf(POSTag.V)) {
+/* 1437 */         hasStem = true;
+/* 1438 */         hasPreWord = true;
+/*      */ 
+/* 1440 */         if (mp.isTag(POSTag.VCP)) hasJo = true;
+/*      */ 
+/*      */       }
+/* 1443 */       else if (mp.isTagOf(POSTag.EP)) {
+/* 1444 */         hasEP = true;
+/* 1445 */         hasPreWord = true;
+/*      */       }
+/* 1448 */       else if (mp.isTagOf(POSTag.EM)) {
+/* 1449 */         hasEM = true;
+/* 1450 */         hasPreWord = true;
+/*      */ 
+/* 1452 */         if (mp.isTag(POSTag.ETN)) hasPreWord = true;
+/*      */ 
+/*      */       }
+/* 1455 */       else if (mp.isTagOf(POSTag.J)) {
+/* 1456 */         hasJo = true;
+/*      */       }
+/* 1459 */       else if (mp.isTag(POSTag.UN)) {
+/* 1460 */         hasPreWord = true;
+/* 1461 */         nrDicLen += mp.string.length();
+/*      */       }
+/*      */       else
+/*      */       {
+/* 1465 */         hasPreWord = true;
+/*      */       }
+/*      */ 
+/*      */     }
+/*      */ 
+/* 1471 */     calcHashCode();
+/*      */   }
+/*      */ 
+/*      */   public static MCandidate create(String exp, String source)
+/*      */   {
+/* 1517 */     MCandidate mCandidate = new MCandidate();
+/* 1518 */     mCandidate.setExp(exp);
+/* 1519 */     StringTokenizer st = new StringTokenizer(source, "[]", false);
+/*      */ 
+/* 1522 */     String token = null; String infos = "";
+/* 1523 */     String[] arr = (String[])null;
+/* 1524 */     for (int i = 0; st.hasMoreTokens(); i++) {
+/* 1525 */       token = st.nextToken();
+/* 1526 */       if (i == 0) {
+/* 1527 */         arr = token.split("\\+");
+/* 1528 */         for (int j = 0; j < arr.length; j++)
+/*      */         {
+/* 1530 */           if (arr[j].startsWith(" ")) {
+/* 1531 */             mCandidate.add(new MorphemeSpace(arr[j]));
+/* 1532 */             mCandidate.expList.add(0, "");
+/*      */           }
+/*      */           else
+/*      */           {
+/* 1536 */             mCandidate.add(Morpheme.create(arr[j]));
+/*      */           }
+/*      */         }
+/*      */       } else {
+/* 1540 */         infos = token;
+/*      */       }
+/*      */ 
+/*      */     }
+/*      */ 
+/* 1546 */     st = new StringTokenizer(infos, "*#~&@￢%", true);
+/* 1547 */     while (st.hasMoreTokens()) {
+/* 1548 */       token = st.nextToken();
+/*      */ 
+/* 1550 */       if (token.equals("#")) {
+/* 1551 */         token = st.nextToken().trim();
+/* 1552 */         token = token.substring(1, token.length() - 1);
+/* 1553 */         mCandidate.addApndblTags(token.split(","));
+/*      */       }
+/* 1556 */       else if (token.equals("&")) {
+/* 1557 */         token = st.nextToken().trim();
+/* 1558 */         token = token.substring(1, token.length() - 1);
+/* 1559 */         mCandidate.addHavingConds(token.split(","));
+/*      */       }
+/* 1562 */       else if (token.equals("@")) {
+/* 1563 */         token = st.nextToken().trim();
+/* 1564 */         token = token.substring(1, token.length() - 1);
+/* 1565 */         mCandidate.addChkConds(token.split(","));
+/*      */       }
+/* 1568 */       else if (token.equals("￢")) {
+/* 1569 */         token = st.nextToken().trim();
+/* 1570 */         token = token.substring(1, token.length() - 1);
+/* 1571 */         mCandidate.addExclusionConds(token.split(","));
+/*      */       }
+/*      */     }
+/* 1574 */     mCandidate.initConds(exp);
+/* 1575 */     mCandidate.calcDicLen();
+/* 1576 */     return mCandidate;
+/*      */   }
+/*      */ 
+/*      */   public static MCandidate create(String exp, String analResult, String atl, String hcl, String ccl, String ecl)
+/*      */   {
+/* 1597 */     MCandidate mCandidate = new MCandidate();
+/* 1598 */     mCandidate.setExp(exp);
+/*      */ 
+/* 1601 */     String[] arr = analResult.split("\\+");
+/* 1602 */     for (int j = 0; j < arr.length; j++)
+/*      */     {
+/* 1604 */       if (arr[j].startsWith(" ")) {
+/* 1605 */         mCandidate.add(new MorphemeSpace(arr[j]));
+/* 1606 */         mCandidate.expList.add(0, "");
+/*      */       }
+/*      */       else
+/*      */       {
+/* 1610 */         mCandidate.add(Morpheme.create(arr[j]));
+/*      */       }
+/*      */     }
+/*      */ 
+/* 1614 */     mCandidate.initConds(exp);
+/* 1615 */     mCandidate.calcDicLen();
+/*      */ 
+/* 1618 */     if (Util.valid(atl)) mCandidate.addApndblTags(atl.split(","));
+/*      */ 
+/* 1621 */     if (Util.valid(hcl)) mCandidate.addHavingConds(hcl.split(","));
+/*      */ 
+/* 1624 */     if (Util.valid(ccl)) mCandidate.addChkConds(ccl.split(","));
+/*      */ 
+/* 1627 */     if (Util.valid(ecl)) mCandidate.addExclusionConds(ecl.split(","));
+/*      */ 
+/* 1629 */     return mCandidate;
+/*      */   }
+/*      */ 
+/*      */   public String toString()
+/*      */   {
+/* 1644 */     return getString();
+/*      */   }
+/*      */ 
+/*      */   public String getString()
+/*      */   {
+/* 1659 */     StringBuffer sb = new StringBuffer();
+/*      */ 
+/* 1661 */     sb.append(String.format("%4d", new Object[] { Byte.valueOf(this.realDicLen) }));
+/* 1662 */     sb.append(String.format("%4d", new Object[] { Byte.valueOf(this.candDicLen) }));
+/* 1663 */     sb.append(String.format("%4d", new Object[] { Integer.valueOf(size()) }));
+/* 1664 */     sb.append(String.format("%4d", new Object[] { Integer.valueOf(this.diclenOfBestMC) }));
+/* 1665 */     sb.append(String.format("%10.3f", new Object[] { Float.valueOf(this.spacingLnprOfBestMC) }));
+/* 1666 */     sb.append(String.format("%10.3f", new Object[] { Float.valueOf(this.taggingLnprOfBestMC) }));
+/* 1667 */     sb.append(String.format("%10.3f", new Object[] { Float.valueOf(this.lnprOfSpacing) }));
+/* 1668 */     sb.append(String.format("%10.3f  ", new Object[] { Float.valueOf(this.lnprOfTagging) }));
+/*      */ 
+/* 1671 */     sb.append("[" + super.toString() + "]");
+/*      */ 
+/* 1674 */     String temp = POSTag.getZipTagStr(this.atlEnc);
+/* 1675 */     if (temp != null) sb.append("#(" + temp + ")");
+/*      */ 
+/* 1678 */     temp = Condition.getCondStr(this.hclEnc);
+/* 1679 */     if (temp != null) sb.append("&(" + temp + ")");
+/*      */ 
+/* 1682 */     temp = Condition.getCondStr(this.bclEnc);
+/* 1683 */     if (temp != null) sb.append("~(" + temp + ")");
+/*      */ 
+/* 1686 */     temp = Condition.getCondStr(this.cclEnc);
+/* 1687 */     if (temp != null) sb.append("@(" + temp + ")");
+/*      */ 
+/* 1690 */     temp = Condition.getCondStr(this.eclEnc);
+/* 1691 */     if (temp != null) sb.append("￢(" + temp + ")");
+/*      */ 
+/* 1693 */     sb.append("\t" + this.hashCode);
+/*      */ 
+/* 1695 */     sb.append("\t" + this.expList);
+/*      */ 
+/* 1697 */     if (this.prevBestMC != null) {
+/* 1698 */       sb.append("\t" + this.prevBestMC.lastMorp.getTag());
+/*      */     }
+/*      */ 
+/* 1701 */     return sb.toString();
+/*      */   }
+/*      */ 
+/*      */   public String getSmplDicStr(String compResult)
+/*      */   {
+/* 1715 */     StringBuffer sb = new StringBuffer();
+/*      */ 
+/* 1717 */     long mask = -1L;
+/* 1718 */     long basicATL = getBasicApndblTags();
+/* 1719 */     long basicHCL = getBasicHavingConds() | getBasicPhonemeConds(getExp());
+/*      */ 
+/* 1722 */     sb.append(super.getSmplStr2());
+/*      */ 
+/* 1724 */     StringBuffer sb2 = new StringBuffer();
+/*      */ 
+/* 1726 */     String temp = POSTag.getZipTagStr(this.atlEnc & (0xFFFFFFFF ^ basicATL));
+/* 1727 */     if (temp != null) sb2.append("#(" + temp + ")");
+/*      */ 
+/* 1730 */     temp = Condition.getCondStr(this.hclEnc & (0xFFFFFFFF ^ basicHCL));
+/* 1731 */     if (temp != null) sb2.append("&(" + temp + ")");
+/*      */ 
+/* 1734 */     temp = Condition.getCondStr(this.cclEnc);
+/* 1735 */     if (temp != null) sb2.append("@(" + temp + ")");
+/*      */ 
+/* 1738 */     temp = Condition.getCondStr(this.eclEnc);
+/* 1739 */     if (temp != null) sb2.append("￢(" + temp + ")");
+/*      */ 
+/* 1742 */     if (Util.valid(compResult)) sb2.append("$(" + compResult + ")");
+/*      */ 
+/* 1744 */     if (sb2.length() > 0) {
+/* 1745 */       sb.append(";");
+/* 1746 */       sb.append(sb2);
+/*      */     }
+/*      */ 
+/* 1749 */     return sb.toString();
+/*      */   }
+/*      */ 
+/*      */   public String getRawDicStr()
+/*      */   {
+/* 1755 */     StringBuffer sb = new StringBuffer();
+/*      */ 
+/* 1757 */     long mask = -1L;
+/* 1758 */     long basicATL = getBasicApndblTags();
+/* 1759 */     long basicHCL = getBasicHavingConds() | getBasicPhonemeConds(getExp());
+/*      */ 
+/* 1761 */     String temp = null;
+/*      */ 
+/* 1763 */     sb.append(getExp() + ":{[" + super.getSmplStr2() + "]");
+/*      */ 
+/* 1766 */     if ((temp = POSTag.getZipTagStr(this.atlEnc & (0xFFFFFFFF ^ basicATL))) != null) sb.append("#(" + temp + ")");
+/*      */ 
+/* 1768 */     if ((temp = Condition.getCondStr(this.hclEnc & (0xFFFFFFFF ^ basicHCL))) != null) sb.append("&(" + temp + ")");
+/*      */ 
+/* 1770 */     if ((temp = Condition.getCondStr(this.cclEnc)) != null) sb.append("@(" + temp + ")");
+/*      */ 
+/* 1772 */     temp = Condition.getCondStr(this.eclEnc);
+/* 1773 */     if ((temp = Condition.getCondStr(this.eclEnc)) != null) sb.append("￢(" + temp + ")");
+/* 1774 */     sb.append("}");
+/*      */ 
+/* 1776 */     return sb.toString();
+/*      */   }
+/*      */ 
+/*      */   public String toSimpleStr()
+/*      */   {
+/* 1782 */     return super.toString();
+/*      */   }
+/*      */ 
+/*      */   String getEncStr()
+/*      */   {
+/* 1796 */     StringBuffer sb = new StringBuffer();
+/* 1797 */     sb.append(super.getEncStr());
+/* 1798 */     sb.append("!" + this.atlEnc);
+/* 1799 */     sb.append("!" + this.hclEnc);
+/* 1800 */     sb.append("!" + this.cclEnc);
+/* 1801 */     sb.append("!" + this.eclEnc);
+/* 1802 */     return sb.toString();
+/*      */   }
+/*      */ 
+/*      */   boolean merge(MCandidate mc)
+/*      */   {
+/* 1817 */     int size = size();
+/* 1818 */     if (size != mc.size()) return false;
+/* 1819 */     if (this.atlEnc != mc.atlEnc) return false;
+/* 1820 */     if (this.hclEnc != mc.hclEnc) return false;
+/* 1821 */     if (this.cclEnc != mc.cclEnc) return false;
+/* 1822 */     if (this.eclEnc != mc.eclEnc) return false;
+/*      */ 
+/* 1824 */     Morpheme mp1 = null; Morpheme mp2 = null; Morpheme catchedMp1 = null; Morpheme catchedMp2 = null;
+/*      */ 
+/* 1826 */     for (int i = 0; i < size; i++) {
+/* 1827 */       mp1 = (Morpheme)get(i);
+/* 1828 */       mp2 = (Morpheme)mc.get(i);
+/*      */ 
+/* 1830 */       if (!mp1.string.equals(mp2.string)) return false;
+/* 1831 */       if (mp1.infoEnc != mp2.infoEnc) {
+/* 1832 */         if (catchedMp1 != null) return false;
+/* 1833 */         catchedMp1 = mp1;
+/* 1834 */         catchedMp2 = mp2;
+/*      */       }
+/*      */     }
+/*      */ 
+/* 1838 */     if (catchedMp1 == null) return true;
+/*      */ 
+/* 1840 */     catchedMp1.infoEnc |= catchedMp2.infoEnc;
+/*      */ 
+/* 1842 */     return true;
+/*      */   }
+/*      */ 
+/*      */   public void setBestPrevMC(MCandidate mcPrev)
+/*      */   {
+/* 1858 */     if (mcPrev == null) {
+/* 1859 */       this.prevBestMC = null;
+/* 1860 */       this.diclenOfBestMC = getDicLenWithCand();
+/* 1861 */       this.spacingLnprOfBestMC = this.lnprOfSpacing;
+/* 1862 */       this.taggingLnprOfBestMC = (PDDictionary.getLnprPosGMorpInter(POSTag.BOS, this.firstMorp.string, this.firstMorp.getTagNum()) + this.lnprOfTagging);
+/* 1863 */       return;
+/*      */     }
+/*      */ 
+/* 1868 */     boolean apndbl = false;
+/*      */ 
+/* 1871 */     if ((mcPrev.lastMorp.isTagOf(POSTag.EF)) && (this.firstMorp.isTagOf(POSTag.SF))) apndbl = true;
+/*      */ 
+/* 1874 */     int newBestDicLen = mcPrev.diclenOfBestMC + mcPrev.getDicLenWithCand();
+/*      */ 
+/* 1877 */     float newBestSpacingLnpr = mcPrev.spacingLnprOfBestMC + this.lnprOfSpacing;
+/* 1878 */     newBestSpacingLnpr += SpacingPDDictionary.getProb(mcPrev.getLastSyllable(), getFirstSyllable(), !apndbl);
+/*      */ 
+/* 1881 */     float newBestTaggingLnpr = mcPrev.taggingLnprOfBestMC + this.lnprOfTagging;
+/* 1882 */     if (apndbl)
+/*      */     {
+/* 1887 */       newBestTaggingLnpr += PDDictionary.getLnprPosGMorpIntra(mcPrev.lastMorp.getTagNum(), this.firstMorp.string, this.firstMorp.getTagNum());
+/*      */     }
+/* 1889 */     else newBestTaggingLnpr += PDDictionary.getLnprPosGMorpInter(mcPrev.lastMorp.getTagNum(), this.firstMorp.string, this.firstMorp.getTagNum());
+/*      */ 
+/* 1896 */     if (this.prevBestMC == null) {
+/* 1897 */       this.prevBestMC = mcPrev;
+/* 1898 */       this.diclenOfBestMC = newBestDicLen;
+/* 1899 */       this.spacingLnprOfBestMC = newBestSpacingLnpr;
+/* 1900 */       this.taggingLnprOfBestMC = newBestTaggingLnpr;
+/*      */     }
+/* 1903 */     else if (newBestDicLen > this.diclenOfBestMC) {
+/* 1904 */       this.prevBestMC = mcPrev;
+/* 1905 */       this.diclenOfBestMC = newBestDicLen;
+/* 1906 */       this.spacingLnprOfBestMC = newBestSpacingLnpr;
+/* 1907 */       this.taggingLnprOfBestMC = newBestTaggingLnpr;
+/*      */     }
+/* 1910 */     else if ((newBestDicLen == this.diclenOfBestMC) && 
+/* 1911 */       (newBestSpacingLnpr + newBestTaggingLnpr > this.spacingLnprOfBestMC + this.taggingLnprOfBestMC))
+/*      */     {
+/* 1913 */       this.prevBestMC = mcPrev;
+/* 1914 */       this.diclenOfBestMC = newBestDicLen;
+/* 1915 */       this.spacingLnprOfBestMC = newBestSpacingLnpr;
+/* 1916 */       this.taggingLnprOfBestMC = newBestTaggingLnpr;
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public void calcLnprOfSpacing()
+/*      */   {
+/* 1924 */     this.lnprOfSpacing = SpacingPDDictionary.getProb(getExp());
+/*      */   }
+/*      */ 
+/*      */   public void calcLnprOfTagging()
+/*      */   {
+/* 1938 */     this.lnprOfTagging = 0.0F;
+/*      */ 
+/* 1940 */     boolean isApndbl = true;
+/* 1941 */     Morpheme prevMp = null;
+/* 1942 */     Morpheme mp = null;
+/* 1943 */     int i = 0; for (int size = size(); i < size; i++) {
+/* 1944 */       mp = (Morpheme)get(i);
+/*      */ 
+/* 1947 */       if ((mp instanceof MorphemeSpace)) {
+/* 1948 */         isApndbl = false;
+/*      */       }
+/*      */       else
+/*      */       {
+/* 1952 */         this.lnprOfTagging += PDDictionary.getLnprPosGExp(mp.string, mp.getTagNum());
+/*      */ 
+/* 1955 */         if (prevMp != null)
+/*      */         {
+/* 1957 */           if (isApndbl)
+/*      */           {
+/* 1959 */             if ((!prevMp.isTagOf(POSTag.XS)) || (!(mp.getString().equals("ㄴ") | mp.getString().equals("ㅁ") | mp.getString().equals("ㄹ"))))
+/*      */             {
+/* 1962 */               this.lnprOfTagging += PDDictionary.getLnprPosGMorpIntra(prevMp.getTagNum(), mp.string, mp.getTagNum());
+/*      */             }
+/*      */           }
+/*      */           else
+/*      */           {
+/* 1967 */             this.lnprOfTagging += PDDictionary.getLnprPosGMorpInter(prevMp.getTagNum(), mp.string, mp.getTagNum());
+/* 1968 */             isApndbl = true;
+/*      */           }
+/*      */ 
+/*      */         }
+/*      */ 
+/* 1976 */         prevMp = mp;
+/*      */       }
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public boolean isFirstTagOf(long tagEnc)
+/*      */   {
+/* 1992 */     return this.firstMorp.isTagOf(tagEnc);
+/*      */   }
+/*      */ 
+/*      */   public boolean isNotHangul()
+/*      */   {
+/* 2006 */     return !this.lastMorp.isCharSetOf(CharSetType.HANGUL);
+/*      */   }
+/*      */ 
+/*      */   public byte getRealDicLen()
+/*      */   {
+/* 2015 */     return this.realDicLen;
+/*      */   }
+/*      */ 
+/*      */   public void setRealDicLen(byte realDicLen)
+/*      */   {
+/* 2024 */     this.realDicLen = realDicLen;
+/*      */   }
+/*      */ 
+/*      */   public byte getCandDicLen()
+/*      */   {
+/* 2033 */     return this.candDicLen;
+/*      */   }
+/*      */ 
+/*      */   public void setCandDicLen(byte candDicLen)
+/*      */   {
+/* 2042 */     this.candDicLen = candDicLen;
+/*      */   }
+/*      */ 
+/*      */   public void setLnprOfSpacing(float lnprOfSpacing)
+/*      */   {
+/* 2051 */     this.lnprOfSpacing = lnprOfSpacing;
+/*      */   }
+/*      */ 
+/*      */   public float getBestLnpr()
+/*      */   {
+/* 2057 */     return this.spacingLnprOfBestMC + this.taggingLnprOfBestMC;
+/*      */   }
+/*      */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.ma.MCandidate
+ * JD-Core Version:    0.6.1
+ */

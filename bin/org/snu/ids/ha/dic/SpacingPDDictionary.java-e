@@ -1,0 +1,100 @@
+/*     */ package org.snu.ids.ha.dic;
+/*     */ 
+/*     */ import java.io.BufferedReader;
+/*     */ import java.io.InputStreamReader;
+/*     */ import java.io.PrintStream;
+/*     */ import java.util.Hashtable;
+/*     */ import org.snu.ids.ha.util.Timer;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public class SpacingPDDictionary
+/*     */ {
+/*  21 */   private static final float DEFAULT_PROB = (float)Math.log(0.5D);
+/*  22 */   private static final Hashtable<String, float[]> PROB_HASH = new Hashtable();
+/*     */ 
+/*  24 */   static { load("/dic/prob/lnpr_syllable_bi.dic"); }
+/*     */ 
+/*     */ 
+/*     */   public static final void load(String fileName)
+/*     */   {
+/*  38 */     System.out.println("Loading " + fileName);
+/*  39 */     Timer timer = new Timer();
+/*  40 */     timer.start();
+/*     */ 
+/*  42 */     String line = null;
+/*  43 */     BufferedReader br = null;
+/*     */     try {
+/*  45 */       br = new BufferedReader(new InputStreamReader(SpacingPDDictionary.class.getResourceAsStream(fileName), "UTF-8"));
+/*     */ 
+/*  47 */       while ((line = br.readLine()) != null)
+/*  48 */         if ((Util.valid(line)) && (!line.startsWith("//"))) {
+/*  49 */           line = line.trim();
+/*  50 */           String[] arr = line.split("\t");
+/*  51 */           float[] lnProb = { Float.parseFloat(arr[2]), Float.parseFloat(arr[3]) };
+/*  52 */           PROB_HASH.put(getKey(arr[0], arr[1]), lnProb);
+/*     */         }
+/*  54 */       br.close();
+/*     */     } catch (Exception e) {
+/*  56 */       e.printStackTrace();
+/*  57 */       System.err.println(line);
+/*  58 */       System.err.println("Unable to load probability dictionary!!");
+/*     */     } finally {
+/*  60 */       timer.stop();
+/*  61 */       System.out.println(PROB_HASH.size() + " values are loaded. (Loading time( " + timer.getInterval() + " secs)");
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   public static final float getProb(char ch1, char ch2, boolean hasSpace)
+/*     */   {
+/*  79 */     float[] probs = (float[])PROB_HASH.get(getKey(ch1, ch2));
+/*  80 */     if (probs != null) {
+/*  81 */       if (hasSpace) return probs[0];
+/*  82 */       return probs[1];
+/*     */     }
+/*  84 */     return DEFAULT_PROB;
+/*     */   }
+/*     */ 
+/*     */   public static float getProb(String str)
+/*     */   {
+/* 100 */     if (!Util.valid(str)) return 1.4E-45F;
+/* 101 */     float prob = 0.0F;
+/* 102 */     str = str.trim().replaceAll("[ \t]+", " ");
+/*     */ 
+/* 104 */     int i = 0; for (int len = str.length() - 1; i < len; i++) {
+/* 105 */       boolean hasSpace = false;
+/* 106 */       char ch1 = str.charAt(i);
+/* 107 */       char ch2 = str.charAt(i + 1);
+/* 108 */       if (ch2 == ' ') {
+/* 109 */         ch2 = str.charAt(i + 1);
+/* 110 */         i++;
+/* 111 */         hasSpace = true;
+/*     */       }
+/*     */ 
+/* 114 */       float fTemp = getProb(ch1, ch2, hasSpace);
+/* 115 */       prob += fTemp;
+/*     */     }
+/*     */ 
+/* 118 */     return prob;
+/*     */   }
+/*     */ 
+/*     */   private static String getKey(String syllable1, String syllable2)
+/*     */   {
+/* 134 */     return syllable1 + syllable2;
+/*     */   }
+/*     */ 
+/*     */   private static String getKey(char syllable1, char syllable2)
+/*     */   {
+/* 150 */     return syllable1 + syllable2;
+/*     */   }
+/*     */ 
+/*     */   public static void main(String[] args)
+/*     */   {
+/* 156 */     System.out.println(getProb("쇼와"));
+/* 157 */     System.out.println(getProb("쇼 와"));
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.dic.SpacingPDDictionary
+ * JD-Core Version:    0.6.1
+ */

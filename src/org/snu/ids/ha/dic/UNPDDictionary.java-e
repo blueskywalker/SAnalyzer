@@ -1,0 +1,79 @@
+/*     */ package org.snu.ids.ha.dic;
+/*     */ 
+/*     */ import java.io.BufferedReader;
+/*     */ import java.io.InputStreamReader;
+/*     */ import java.io.PrintStream;
+/*     */ import java.util.Hashtable;
+/*     */ import org.snu.ids.ha.constants.POSTag;
+/*     */ import org.snu.ids.ha.util.Timer;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public class UNPDDictionary
+/*     */ {
+/*     */   private static final float DEFAULT_PROB = -30.0F;
+/*  23 */   private static final Hashtable<Character, Float> PROB_AT_NOUN_HASH = new Hashtable();
+/*     */ 
+/*  25 */   static { load("/dic/prob/lnpr_syllable_uni_noun.dic"); }
+/*     */ 
+/*     */ 
+/*     */   public static final void load(String fileName)
+/*     */   {
+/*  39 */     System.out.println("Loading " + fileName);
+/*  40 */     Timer timer = new Timer();
+/*  41 */     timer.start();
+/*     */ 
+/*  43 */     String line = null;
+/*  44 */     BufferedReader br = null;
+/*     */     try {
+/*  46 */       br = new BufferedReader(new InputStreamReader(SpacingPDDictionary.class.getResourceAsStream(fileName), "UTF-8"));
+/*     */ 
+/*  48 */       while ((line = br.readLine()) != null)
+/*  49 */         if ((Util.valid(line)) && (!line.startsWith("//"))) {
+/*  50 */           line = line.trim();
+/*  51 */           char ch = line.charAt(0);
+/*  52 */           float lnpr = Float.parseFloat(line.substring(1).trim());
+/*  53 */           PROB_AT_NOUN_HASH.put(Character.valueOf(ch), Float.valueOf(lnpr));
+/*     */         }
+/*  55 */       br.close();
+/*     */     } catch (Exception e) {
+/*  57 */       e.printStackTrace();
+/*  58 */       System.err.println(line);
+/*  59 */       System.err.println("Unable to load probability dictionary!!");
+/*     */     } finally {
+/*  61 */       timer.stop();
+/*  62 */       System.out.println(PROB_AT_NOUN_HASH.size() + " values are loaded. (Loading time( " + timer.getInterval() + " secs)");
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   private static final float getProbAtNoun(char ch)
+/*     */   {
+/*  78 */     Float lnpr = (Float)PROB_AT_NOUN_HASH.get(Character.valueOf(ch));
+/*  79 */     if (lnpr != null) {
+/*  80 */       return lnpr.floatValue();
+/*     */     }
+/*  82 */     return -30.0F;
+/*     */   }
+/*     */ 
+/*     */   public static float getProb(String str)
+/*     */   {
+/* 100 */     if (!Util.valid(str)) return 1.4E-45F;
+/* 101 */     float prob = 0.0F;
+/* 102 */     int i = 0; for (int len = str.length(); i < len; i++) {
+/* 103 */       char ch = str.charAt(i);
+/* 104 */       prob += getProbAtNoun(ch);
+/*     */     }
+/*     */ 
+/* 110 */     return prob;
+/*     */   }
+/*     */ 
+/*     */   public static void main(String[] args)
+/*     */   {
+/* 116 */     System.out.println(getProb("속한"));
+/* 117 */     System.out.println(PDDictionary.getLnprPosGExp("속하", POSTag.VV));
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.dic.UNPDDictionary
+ * JD-Core Version:    0.6.1
+ */

@@ -1,0 +1,61 @@
+/*    */ package org.snu.ids.ha.sp;
+/*    */ 
+/*    */ import org.snu.ids.ha.constants.POSTag;
+/*    */ import org.snu.ids.ha.ma.Eojeol;
+/*    */ import org.snu.ids.ha.ma.Morpheme;
+/*    */ 
+/*    */ public class ParseGrammar
+/*    */ {
+/* 22 */   String relation = null;
+/* 23 */   String dependantMorp = null;
+/* 24 */   long dependantTag = 0L;
+/* 25 */   String dominantMorp = null;
+/* 26 */   long dominantTag = 0L;
+/* 27 */   int distance = 1;
+/* 28 */   int priority = 10;
+/*    */ 
+/*    */   public ParseGrammar(String relation, long dependantTag, long dominantTag, int distance, int priority)
+/*    */   {
+/* 46 */     this.relation = relation;
+/* 47 */     this.dependantTag = dependantTag;
+/* 48 */     this.dominantTag = dominantTag;
+/* 49 */     this.distance = distance;
+/* 50 */     this.priority = priority;
+/*    */   }
+/*    */ 
+/*    */   public ParseGrammar(String relation, String dependantMorp, long dependantTag, String dominantMorp, long dominantTag, int distance, int priority)
+/*    */   {
+/* 57 */     this.relation = relation;
+/* 58 */     this.dependantMorp = dependantMorp;
+/* 59 */     this.dependantTag = dependantTag;
+/* 60 */     this.dominantMorp = dominantMorp;
+/* 61 */     this.dominantTag = dominantTag;
+/* 62 */     this.distance = distance;
+/* 63 */     this.priority = priority;
+/*    */   }
+/*    */ 
+/*    */   public ParseTreeEdge dominate(ParseTreeNode prevNode, ParseTreeNode nextNode, int distance)
+/*    */   {
+/* 81 */     if (this.dominantTag == POSTag.VCP) {
+/* 82 */       if ((prevNode.getEojeol().isLastTagOf(this.dependantTag)) && 
+/* 83 */         (nextNode.getEojeol().containsTagOf(this.dominantTag)) && 
+/* 84 */         (distance <= this.distance))
+/*    */       {
+/* 86 */         return new ParseTreeEdge(this.relation, prevNode, nextNode, distance, this.priority);
+/*    */       }
+/*    */     }
+/* 89 */     else if ((prevNode.getEojeol().isLastTagOf(this.dependantTag)) && 
+/* 90 */       (nextNode.getEojeol().getFirstMorp().isTagOf(this.dominantTag)) && 
+/* 91 */       (distance <= this.distance))
+/*    */     {
+/* 93 */       return new ParseTreeEdge(this.relation, prevNode, nextNode, distance, this.priority);
+/*    */     }
+/*    */ 
+/* 96 */     return null;
+/*    */   }
+/*    */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.sp.ParseGrammar
+ * JD-Core Version:    0.6.1
+ */

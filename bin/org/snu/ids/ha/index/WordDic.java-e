@@ -1,0 +1,47 @@
+/*    */ package org.snu.ids.ha.index;
+/*    */ 
+/*    */ import java.io.BufferedReader;
+/*    */ import java.io.IOException;
+/*    */ import java.io.InputStreamReader;
+/*    */ import java.io.PrintStream;
+/*    */ import java.util.HashSet;
+/*    */ import org.snu.ids.ha.util.Timer;
+/*    */ 
+/*    */ public class WordDic extends HashSet<String>
+/*    */ {
+/* 28 */   int maxLen = -2147483648;
+/* 29 */   int minLen = 2147483647;
+/*    */ 
+/*    */   public WordDic(String fileName)
+/*    */   {
+/* 35 */     load(fileName);
+/*    */   }
+/*    */ 
+/*    */   public void load(String fileName)
+/*    */   {
+/* 41 */     System.out.println("Loading " + fileName);
+/* 42 */     Timer timer = new Timer();
+/* 43 */     timer.start();
+/* 44 */     BufferedReader br = null;
+/*    */     try {
+/* 46 */       br = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName), "UTF-8"));
+/* 47 */       String line = null;
+/* 48 */       while ((line = br.readLine()) != null) {
+/* 49 */         int len = line.length();
+/* 50 */         if (len > this.maxLen) this.maxLen = len;
+/* 51 */         if (len < this.minLen) this.minLen = len;
+/* 52 */         super.add(line);
+/*    */       }
+/*    */     } catch (IOException e) {
+/* 55 */       System.err.println("Loading Error!");
+/*    */     } finally {
+/* 57 */       timer.stop();
+/* 58 */       System.out.println("Loaded " + timer.getInterval() + "secs");
+/*    */     }
+/*    */   }
+/*    */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.index.WordDic
+ * JD-Core Version:    0.6.1
+ */

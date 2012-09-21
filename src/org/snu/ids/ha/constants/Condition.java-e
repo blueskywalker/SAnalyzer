@@ -1,0 +1,186 @@
+/*     */ package org.snu.ids.ha.constants;
+/*     */ 
+/*     */ import java.io.PrintStream;
+/*     */ import java.util.ArrayList;
+/*     */ import java.util.Collections;
+/*     */ import java.util.Hashtable;
+/*     */ import java.util.List;
+/*     */ import org.snu.ids.ha.util.Hangul;
+/*     */ 
+/*     */ public class Condition extends Hangul
+/*     */ {
+/*  29 */   public static final String[] COND_ARR = { 
+/*  30 */     "ㅣ겹", 
+/*  31 */     "모음", 
+/*  32 */     "자음", 
+/*  33 */     "양성", 
+/*  34 */     "음성", 
+/*  35 */     "사오", 
+/*  36 */     "사옵", 
+/*  37 */     "시오", 
+/*  38 */     "오", 
+/*  39 */     "으라", 
+/*  40 */     "으리", 
+/*  41 */     "으시", 
+/*  42 */     "아", 
+/*  43 */     "었", 
+/*  44 */     "겠", 
+/*  45 */     "려", 
+/*  46 */     "ㄴ", 
+/*  47 */     "ㄹ", 
+/*  48 */     "ㅁ", 
+/*  49 */     "ㅂ", 
+/*  50 */     "-ㅂ", 
+/*  51 */     "-ㄹ", 
+/*  52 */     "-ㅎ", 
+/*  53 */     "-ㅅ", 
+/*  54 */     "하", 
+/*  55 */     "가다", 
+/*  56 */     "오다", 
+/*  57 */     "ENG", 
+/*  58 */     "체언", 
+/*  59 */     "관형어", 
+/*  60 */     "부사어", 
+/*  61 */     "서술어", 
+/*  62 */     "EC", 
+/*  63 */     "F", 
+/*  64 */     "생략" };
+/*     */ 
+/*  67 */   public static final Hashtable<String, Long> COND_HASH = new Hashtable();
+/*  68 */   public static final Hashtable<Long, String> COND_NUM_HASH = new Hashtable();
+/*     */ 
+/* 245 */   public static final long YI_DB = getCondNum("ㅣ겹");
+/* 246 */   public static final long MOEUM = getCondNum("모음");
+/* 247 */   public static final long JAEUM = getCondNum("자음");
+/* 248 */   public static final long YANGSEONG = getCondNum("양성");
+/* 249 */   public static final long EUMSEONG = getCondNum("음성");
+/*     */ 
+/* 251 */   public static final long SAO = getCondNum("사오");
+/* 252 */   public static final long SAOP = getCondNum("사옵");
+/* 253 */   public static final long SIO = getCondNum("시오");
+/* 254 */   public static final long OH = getCondNum("오");
+/* 255 */   public static final long ERA = getCondNum("으라");
+/* 256 */   public static final long ERI = getCondNum("으리");
+/* 257 */   public static final long ESI = getCondNum("으시");
+/* 258 */   public static final long AH = getCondNum("아");
+/* 259 */   public static final long EUT = getCondNum("었");
+/* 260 */   public static final long GET = getCondNum("겠");
+/* 261 */   public static final long LYEO = getCondNum("려");
+/*     */ 
+/* 264 */   public static final long NIEUN = getCondNum("ㄴ");
+/* 265 */   public static final long MIEUM = getCondNum("ㅁ");
+/* 266 */   public static final long LIEUL = getCondNum("ㄹ");
+/*     */ 
+/* 268 */   public static final long BIEUB = getCondNum("ㅂ");
+/*     */ 
+/* 271 */   public static final long MINUS_BIEUB = getCondNum("-ㅂ");
+/*     */ 
+/* 274 */   public static final long MINUS_LIEUL = getCondNum("-ㄹ");
+/* 275 */   public static final long MINUS_HIEUT = getCondNum("-ㅎ");
+/* 276 */   public static final long MINUS_SIOT = getCondNum("-ㅅ");
+/*     */ 
+/* 279 */   public static final long HA = getCondNum("하");
+/* 280 */   public static final long GADA = getCondNum("가다");
+/* 281 */   public static final long ODA = getCondNum("오다");
+/* 282 */   public static final long ENG = getCondNum("ENG");
+/*     */ 
+/* 285 */   public static final long N = getCondNum("체언");
+/* 286 */   public static final long D = getCondNum("관형어");
+/* 287 */   public static final long A = getCondNum("부사어");
+/* 288 */   public static final long V = getCondNum("서술어");
+/*     */ 
+/* 291 */   public static final long EC = getCondNum("EC");
+/*     */ 
+/* 293 */   public static final long F = getCondNum("F");
+/* 294 */   public static final long SHORTEN = getCondNum("생략");
+/*     */ 
+/* 296 */   public static final long MINUS_JA_SET = MINUS_LIEUL | MINUS_HIEUT | MINUS_SIOT;
+/* 297 */   public static final long SET_FOR_UN = JAEUM | MOEUM | YANGSEONG | EUMSEONG;
+/*     */ 
+/*     */   static
+/*     */   {
+/*  70 */     long conditionNum = 0L;
+/*     */ 
+/*  72 */     int i = 0; for (int stop = COND_ARR.length; i < stop; i++) {
+/*  73 */       conditionNum = 1L << i;
+/*  74 */       COND_HASH.put(COND_ARR[i], new Long(conditionNum));
+/*  75 */       COND_NUM_HASH.put(new Long(conditionNum), COND_ARR[i]);
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   private static final long getCondNum(int i)
+/*     */   {
+/*  91 */     return 1L << i;
+/*     */   }
+/*     */ 
+/*     */   public static long getCondNum(String cond)
+/*     */   {
+/*     */     try
+/*     */     {
+/* 107 */       return ((Long)COND_HASH.get(cond)).longValue();
+/*     */     } catch (Exception e) {
+/* 109 */       System.err.println("[" + cond + "] 정의되지 않은 조건입니다.");
+/*     */     }
+/* 111 */     return 0L;
+/*     */   }
+/*     */ 
+/*     */   public static long getCondNum(String[] conds)
+/*     */   {
+/* 126 */     long l = 0L;
+/* 127 */     int i = 0; for (int size = conds == null ? 0 : conds.length; i < size; i++) {
+/* 128 */       l |= getCondNum(conds[i]);
+/*     */     }
+/* 130 */     return l;
+/*     */   }
+/*     */ 
+/*     */   public static String getCond(long condNum)
+/*     */   {
+/* 145 */     return condNum == 0L ? null : (String)COND_NUM_HASH.get(new Long(condNum));
+/*     */   }
+/*     */ 
+/*     */   public static List<String> getCondList(long encCondNum)
+/*     */   {
+/* 160 */     List ret = new ArrayList();
+/* 161 */     int i = 0; for (int stop = COND_ARR.length; i < stop; i++) {
+/* 162 */       if ((encCondNum & getCondNum(i)) > 0L) ret.add(COND_ARR[i]);
+/*     */     }
+/* 164 */     return ret;
+/*     */   }
+/*     */ 
+/*     */   public static String getCondStr(long encCondNum)
+/*     */   {
+/* 179 */     StringBuffer sb = new StringBuffer();
+/* 180 */     List condList = getCondList(encCondNum);
+/* 181 */     int i = 0; for (int size = condList.size(); i < size; i++) {
+/* 182 */       if (i > 0) sb.append(",");
+/* 183 */       sb.append((String)condList.get(i));
+/*     */     }
+/* 185 */     return sb.length() == 0 ? null : sb.toString();
+/*     */   }
+/*     */ 
+/*     */   public static final List<String> getCondList()
+/*     */   {
+/* 199 */     List condList = new ArrayList();
+/* 200 */     List condNumList = new ArrayList(COND_NUM_HASH.keySet());
+/* 201 */     Collections.sort(condNumList);
+/* 202 */     int i = 0; for (int size = condNumList.size(); i < size; i++) {
+/* 203 */       condList.add((String)COND_NUM_HASH.get(condNumList.get(i)));
+/*     */     }
+/* 205 */     return condList;
+/*     */   }
+/*     */ 
+/*     */   public static final boolean checkAnd(long havingCond, long checkingCond)
+/*     */   {
+/* 221 */     return (havingCond & checkingCond) == checkingCond;
+/*     */   }
+/*     */ 
+/*     */   public static final boolean checkOr(long havingCond, long checkingCond)
+/*     */   {
+/* 237 */     return (havingCond & checkingCond) > 0L;
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.constants.Condition
+ * JD-Core Version:    0.6.1
+ */

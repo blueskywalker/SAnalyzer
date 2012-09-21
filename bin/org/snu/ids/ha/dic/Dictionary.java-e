@@ -1,0 +1,893 @@
+/*      */ package org.snu.ids.ha.dic;
+/*      */ 
+/*      */ import java.io.File;
+/*      */ import java.io.FileOutputStream;
+/*      */ import java.io.PrintStream;
+/*      */ import java.io.PrintWriter;
+/*      */ import java.util.ArrayList;
+/*      */ import java.util.Collection;
+/*      */ import java.util.Collections;
+/*      */ import java.util.HashSet;
+/*      */ import java.util.Hashtable;
+/*      */ import java.util.Iterator;
+/*      */ import java.util.List;
+/*      */ import java.util.StringTokenizer;
+/*      */ import org.snu.ids.ha.constants.Condition;
+/*      */ import org.snu.ids.ha.constants.POSTag;
+/*      */ import org.snu.ids.ha.ma.MCandidate;
+/*      */ import org.snu.ids.ha.ma.MExpression;
+/*      */ import org.snu.ids.ha.ma.Morpheme;
+/*      */ import org.snu.ids.ha.util.Hangul;
+/*      */ import org.snu.ids.ha.util.StringSet;
+/*      */ import org.snu.ids.ha.util.Timer;
+/*      */ import org.snu.ids.ha.util.Util;
+/*      */ 
+/*      */ public class Dictionary
+/*      */ {
+/*   50 */   private static Dictionary dictionary = null;
+/*      */ 
+/*   74 */   static boolean isLoading = false;
+/*      */ 
+/*   84 */   private final Hashtable<String, MExpression> table = new Hashtable(530000);
+/*   85 */   private List<MExpression> meList = null;
+/*   86 */   private final Hashtable<String, String[]> compNounTable = new Hashtable();
+/*   87 */   private final HashSet<String> verbStemSet = new HashSet();
+/*   88 */   private int maxLen = 0;
+/*      */ 
+/*  221 */   static final StringSet MO_SET1 = new StringSet(new String[] { "ㅏ", "ㅓ", "ㅐ", "ㅔ" });
+/*  222 */   static final StringSet MO_SET2 = new StringSet(new String[] { "ㅗ", "ㅜ", "ㅡ" });
+/*      */ 
+/*      */   public static final synchronized Dictionary getInstance()
+/*      */   {
+/*   63 */     if ((!isLoading) && 
+/*   64 */       (dictionary == null)) {
+/*   65 */       isLoading = true;
+/*   66 */       dictionary = new Dictionary();
+/*   67 */       isLoading = false;
+/*      */     }
+/*      */ 
+/*   70 */     return dictionary;
+/*      */   }
+/*      */ 
+/*      */   protected Dictionary()
+/*      */   {
+/*  100 */     Timer timer = new Timer();
+/*      */     try {
+/*  102 */       timer.start();
+/*  103 */       loadDic();
+/*      */     } catch (Exception e) {
+/*  105 */       e.printStackTrace();
+/*      */     } finally {
+/*  107 */       timer.stop();
+/*  108 */       timer.printMsg("Dictionary Loading Time");
+/*  109 */       System.out.println("Loaded Item " + this.table.size());
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public static void reload()
+/*      */   {
+/*  123 */     if ((!isLoading) && (dictionary != null)) {
+/*  124 */       Timer timer = new Timer();
+/*      */       try {
+/*  126 */         System.out.println("reloading");
+/*  127 */         timer.start();
+/*  128 */         dictionary.clear();
+/*  129 */         dictionary.loadDic();
+/*      */       } catch (Exception e) {
+/*  131 */         e.printStackTrace();
+/*      */       } finally {
+/*  133 */         timer.stop();
+/*  134 */         timer.printMsg("Dictionary Loading Time");
+/*  135 */         System.out.println("Loaded Item " + dictionary.table.size());
+/*      */       }
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public static void reload(List<DicReader> dicReadList)
+/*      */   {
+/*  151 */     if ((!isLoading) && (dictionary != null)) {
+/*  152 */       Timer timer = new Timer();
+/*      */       try {
+/*  154 */         System.out.println("reloading");
+/*  155 */         timer.start();
+/*  156 */         dictionary.clear();
+/*  157 */         for (int i = 0; i < dicReadList.size(); i++)
+/*  158 */           dictionary.load((DicReader)dicReadList.get(i));
+/*      */       }
+/*      */       catch (Exception e) {
+/*  161 */         e.printStackTrace();
+/*      */       } finally {
+/*  163 */         timer.stop();
+/*  164 */         timer.printMsg("Dictionary Loading Time");
+/*  165 */         System.out.println("Loaded Item " + dictionary.table.size());
+/*      */       }
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public void clear()
+/*      */   {
+/*  181 */     this.table.clear();
+/*  182 */     this.compNounTable.clear();
+/*  183 */     this.verbStemSet.clear();
+/*  184 */     this.maxLen = 0;
+/*      */   }
+/*      */ 
+/*      */   public static MCandidate getVerbBasicMC(String string, String posTag)
+/*      */     throws Exception
+/*      */   {
+/*  205 */     String stem = null;
+/*  206 */     if (string.charAt(string.length() - 1) == 45796)
+/*  207 */       stem = string.substring(0, string.length() - 1);
+/*      */     else {
+/*  209 */       stem = string;
+/*      */     }
+/*      */ 
+/*  212 */     String exp = stem;
+/*  213 */     MCandidate mCandidate = new MCandidate(exp, posTag);
+/*  214 */     mCandidate.setCandDicLen((byte)exp.length());
+/*  215 */     mCandidate.setExp(exp);
+/*      */ 
+/*  217 */     return mCandidate;
+/*      */   }
+/*      */ 
+/*      */   public static List<MCandidate> getVerbExtendedMC(MCandidate mCandidate)
+/*      */   {
+/*  236 */     List ret = new ArrayList();
+/*      */ 
+/*  238 */     String stem = mCandidate.getExp();
+/*  239 */     int stemLen = stem.length();
+/*  240 */     String preStem = stem.substring(0, stemLen - 1);
+/*      */ 
+/*  242 */     char lastCh = stem.charAt(stemLen - 1); char preLastCh = '\000'; char mo = '\000';
+/*  243 */     Hangul lastHg = Hangul.split(lastCh); Hangul preLastHg = null;
+/*  244 */     if (stemLen > 1) {
+/*  245 */       preLastCh = stem.charAt(stemLen - 2);
+/*  246 */       preLastHg = Hangul.split(preLastCh);
+/*      */     } else {
+/*  248 */       preLastCh = '\000';
+/*      */     }
+/*      */ 
+/*  251 */     String exp = null;
+/*  252 */     MCandidate mCandidateClone = null;
+/*      */ 
+/*  259 */     if ((stem.length() == 1) && (!lastHg.hasJong()) && (lastHg.cho != 'ㅎ')) {
+/*  260 */       exp = stem;
+/*  261 */       if (lastHg.jung == 'ㅏ') {
+/*  262 */         mCandidateClone = mCandidate.copy();
+/*  263 */         mCandidateClone.add(new Morpheme("아", POSTag.ECS));
+/*  264 */         mCandidateClone.setExp(exp);
+/*  265 */         mCandidateClone.clearHavingCondition();
+/*  266 */         mCandidateClone.initHavingCond(exp);
+/*  267 */         mCandidateClone.addHavingCond(Condition.AH);
+/*  268 */         mCandidateClone.setRealDicLen((byte)exp.length());
+/*  269 */         ret.add(mCandidateClone);
+/*  270 */       } else if (lastHg.jung == 'ㅓ') {
+/*  271 */         mCandidateClone = mCandidate.copy();
+/*  272 */         mCandidateClone.add(new Morpheme("어", POSTag.ECS));
+/*  273 */         mCandidateClone.setExp(exp);
+/*  274 */         mCandidateClone.clearHavingCondition();
+/*  275 */         mCandidateClone.initHavingCond(exp);
+/*  276 */         mCandidateClone.addHavingCond(Condition.AH);
+/*  277 */         mCandidateClone.setRealDicLen((byte)exp.length());
+/*  278 */         ret.add(mCandidateClone);
+/*      */       }
+/*      */ 
+/*      */     }
+/*      */ 
+/*  284 */     if ((lastCh == 52270) || (lastCh == 51094)) {
+/*  285 */       mCandidateClone = mCandidate.copy();
+/*  286 */       exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, 'ㄴ');
+/*  287 */       mCandidateClone.setExp(exp);
+/*  288 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  289 */       mCandidateClone.setExp(exp);
+/*  290 */       ret.add(mCandidateClone);
+/*      */     }
+/*      */ 
+/*  295 */     if (lastCh == 54616)
+/*      */     {
+/*  297 */       mCandidateClone = mCandidate.copy();
+/*  298 */       exp = preStem + "했";
+/*      */ 
+/*  300 */       mCandidateClone.add(new Morpheme("었", POSTag.EPT));
+/*  301 */       mCandidateClone.setExp(exp);
+/*  302 */       mCandidateClone.clearHavingCondition();
+/*  303 */       mCandidateClone.initHavingCond(exp);
+/*  304 */       mCandidateClone.addHavingCond(Condition.EUT);
+/*  305 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  306 */       ret.add(mCandidateClone);
+/*      */ 
+/*  309 */       mCandidateClone = mCandidate.copy();
+/*  310 */       exp = preStem + "해";
+/*      */ 
+/*  312 */       mCandidateClone.add(new Morpheme("어", POSTag.ECS));
+/*  313 */       mCandidateClone.setExp(exp);
+/*  314 */       mCandidateClone.clearHavingCondition();
+/*  315 */       mCandidateClone.initHavingCond(exp);
+/*  316 */       mCandidateClone.addHavingCond(Condition.AH);
+/*  317 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  318 */       ret.add(mCandidateClone);
+/*      */ 
+/*  321 */       mCandidateClone = mCandidate.copy();
+/*  322 */       exp = preStem + "해";
+/*      */ 
+/*  324 */       mCandidateClone.add(new Morpheme("어", POSTag.EFN));
+/*  325 */       mCandidateClone.setExp(exp);
+/*  326 */       mCandidateClone.clearHavingCondition();
+/*  327 */       mCandidateClone.initHavingCond(exp);
+/*  328 */       mCandidateClone.addHavingCond(Condition.AH);
+/*  329 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  330 */       ret.add(mCandidateClone);
+/*      */ 
+/*  333 */       if (mCandidate.isTagOf(POSTag.VA | POSTag.VXA)) {
+/*  334 */         mCandidateClone = mCandidate.copy();
+/*  335 */         exp = preStem + "치";
+/*  336 */         mCandidateClone.add(new Morpheme("지", POSTag.ECS));
+/*  337 */         mCandidateClone.setExp(exp);
+/*  338 */         mCandidateClone.clearHavingCondition();
+/*  339 */         mCandidateClone.initHavingCond(exp);
+/*  340 */         mCandidateClone.setRealDicLen((byte)exp.length());
+/*  341 */         ret.add(mCandidateClone);
+/*      */       }
+/*      */ 
+/*      */     }
+/*  345 */     else if ((!lastHg.hasJong()) && (lastHg.jung == 'ㅣ'))
+/*      */     {
+/*  347 */       mCandidateClone = mCandidate.copy();
+/*  348 */       exp = preStem + Hangul.combine(lastHg.cho, 'ㅕ', 'ㅆ');
+/*  349 */       mCandidateClone.add(new Morpheme("었", POSTag.EPT));
+/*  350 */       mCandidateClone.setExp(exp);
+/*  351 */       mCandidateClone.clearHavingCondition();
+/*  352 */       mCandidateClone.initHavingCond(exp);
+/*  353 */       mCandidateClone.addHavingCond(Condition.EUT);
+/*  354 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  355 */       ret.add(mCandidateClone);
+/*      */ 
+/*  358 */       mCandidateClone = mCandidate.copy();
+/*  359 */       exp = preStem + Hangul.combine(lastHg.cho, 'ㅕ', ' ');
+/*  360 */       mCandidateClone.add(new Morpheme("어", POSTag.ECS));
+/*  361 */       mCandidateClone.setExp(exp);
+/*  362 */       mCandidateClone.clearHavingCondition();
+/*  363 */       mCandidateClone.initHavingCond(exp);
+/*  364 */       mCandidateClone.addHavingCond(Condition.MOEUM | Condition.EUMSEONG | Condition.AH);
+/*  365 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  366 */       ret.add(mCandidateClone);
+/*      */     }
+/*  369 */     else if ((!lastHg.hasJong()) && (MO_SET1.contains(lastHg.jung))) {
+/*  370 */       mCandidateClone = mCandidate.copy();
+/*  371 */       exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, 'ㅆ');
+/*  372 */       mCandidateClone.add(new Morpheme("었", POSTag.EPT));
+/*  373 */       mCandidateClone.setExp(exp);
+/*  374 */       mCandidateClone.clearHavingCondition();
+/*  375 */       mCandidateClone.initHavingCond(exp);
+/*  376 */       mCandidateClone.addHavingCond(Condition.EUT);
+/*  377 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  378 */       ret.add(mCandidateClone);
+/*      */     }
+/*  381 */     else if (lastCh == 47476)
+/*      */     {
+/*  383 */       mCandidateClone = mCandidate.copy();
+/*  384 */       mCandidateClone.clearHavingCondition();
+/*  385 */       if (preLastCh == 46384) {
+/*  386 */         exp = preStem + "랐";
+/*  387 */         mCandidateClone.add(new Morpheme("았", POSTag.EPT));
+/*  388 */         mCandidateClone.addHavingCond(Condition.EUT);
+/*  389 */       } else if (preLastCh == 54392) {
+/*  390 */         exp = stem + "렀";
+/*  391 */         mCandidateClone.add(new Morpheme("었", POSTag.EPT));
+/*  392 */         mCandidateClone.addHavingCond(Condition.EUT);
+/*      */       } else {
+/*  394 */         mo = getMoeum(lastHg, preLastHg);
+/*  395 */         exp = stem.substring(0, stemLen - 2) + 
+/*  396 */           Hangul.combine(preLastHg.cho, preLastHg.jung, 'ㄹ') + 
+/*  397 */           Hangul.combine(lastHg.cho, mo, 'ㅆ');
+/*  398 */         if (mo == 'ㅏ')
+/*  399 */           mCandidateClone.add(new Morpheme("았", POSTag.EPT));
+/*      */         else {
+/*  401 */           mCandidateClone.add(new Morpheme("었", POSTag.EPT));
+/*      */         }
+/*  403 */         mCandidateClone.addHavingCond(Condition.EUT);
+/*      */       }
+/*  405 */       mCandidateClone.setExp(exp);
+/*  406 */       mCandidateClone.initHavingCond(exp);
+/*  407 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*      */ 
+/*  409 */       ret.add(mCandidateClone);
+/*      */ 
+/*  412 */       mCandidateClone = mCandidate.copy();
+/*  413 */       mCandidateClone.clearHavingCondition();
+/*  414 */       if (preLastCh == 46384) {
+/*  415 */         exp = preStem + "라";
+/*  416 */         mCandidateClone.add(new Morpheme("아", POSTag.ECS));
+/*  417 */         mCandidateClone.addHavingCond(Condition.AH);
+/*  418 */       } else if (preLastCh == 54392) {
+/*  419 */         exp = stem + "러";
+/*  420 */         mCandidateClone.add(new Morpheme("어", POSTag.ECS));
+/*  421 */         mCandidateClone.addHavingCond(Condition.AH);
+/*      */       } else {
+/*  423 */         mo = getMoeum(lastHg, preLastHg);
+/*  424 */         exp = stem.substring(0, stemLen - 2) + 
+/*  425 */           Hangul.combine(preLastHg.cho, preLastHg.jung, 'ㄹ') + 
+/*  426 */           Hangul.combine(lastHg.cho, mo, ' ');
+/*  427 */         if (mo == 'ㅏ') {
+/*  428 */           mCandidateClone.add(new Morpheme("아", POSTag.ECS));
+/*  429 */           mCandidateClone.addHavingCond(Condition.AH);
+/*      */         } else {
+/*  431 */           mCandidateClone.add(new Morpheme("어", POSTag.ECS));
+/*  432 */           mCandidateClone.addHavingCond(Condition.AH);
+/*      */         }
+/*      */       }
+/*  435 */       mCandidateClone.setExp(exp);
+/*  436 */       mCandidateClone.initHavingCond(exp);
+/*  437 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  438 */       ret.add(mCandidateClone);
+/*      */     }
+/*  442 */     else if ((!lastHg.hasJong()) && (lastHg.jung == 'ㅡ'))
+/*      */     {
+/*  444 */       mo = getMoeum(lastHg, preLastHg);
+/*  445 */       mCandidateClone = mCandidate.copy();
+/*  446 */       mCandidateClone.clearHavingCondition();
+/*  447 */       exp = preStem + Hangul.combine(lastHg.cho, mo, 'ㅆ');
+/*  448 */       if (mo == 'ㅏ') {
+/*  449 */         mCandidateClone.add(new Morpheme("았", POSTag.EPT));
+/*  450 */         mCandidateClone.addHavingCond(Condition.EUT);
+/*      */       } else {
+/*  452 */         mCandidateClone.add(new Morpheme("었", POSTag.EPT));
+/*  453 */         mCandidateClone.addHavingCond(Condition.EUT);
+/*      */       }
+/*  455 */       mCandidateClone.setExp(exp);
+/*  456 */       mCandidateClone.initHavingCond(exp);
+/*  457 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  458 */       ret.add(mCandidateClone);
+/*      */ 
+/*  461 */       mCandidateClone = mCandidate.copy();
+/*  462 */       mCandidateClone.clearHavingCondition();
+/*  463 */       exp = preStem + Hangul.combine(lastHg.cho, mo, ' ');
+/*  464 */       if (mo == 'ㅏ') {
+/*  465 */         mCandidateClone.add(new Morpheme("아", POSTag.ECS));
+/*  466 */         mCandidateClone.addHavingCond(Condition.AH);
+/*      */       } else {
+/*  468 */         mCandidateClone.add(new Morpheme("어", POSTag.ECS));
+/*  469 */         mCandidateClone.addHavingCond(Condition.AH);
+/*      */       }
+/*  471 */       mCandidateClone.setExp(exp);
+/*  472 */       mCandidateClone.initHavingCond(exp);
+/*  473 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  474 */       ret.add(mCandidateClone);
+/*      */     }
+/*  477 */     else if ((!lastHg.hasJong()) && (MO_SET2.contains(lastHg.jung)))
+/*      */     {
+/*  479 */       mCandidateClone = mCandidate.copy();
+/*  480 */       exp = preStem + Hangul.combine(lastHg.cho, getMoeum(lastHg, preLastHg), 'ㅆ');
+/*  481 */       if (lastHg.jung == 'ㅜ')
+/*  482 */         mCandidateClone.add(new Morpheme("었", POSTag.EPT));
+/*      */       else {
+/*  484 */         mCandidateClone.add(new Morpheme("았", POSTag.EPT));
+/*      */       }
+/*  486 */       mCandidateClone.setExp(exp);
+/*  487 */       mCandidateClone.clearHavingCondition();
+/*  488 */       mCandidateClone.initHavingCond(exp);
+/*  489 */       mCandidateClone.addHavingCond(Condition.EUT);
+/*  490 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  491 */       ret.add(mCandidateClone);
+/*      */ 
+/*  494 */       mCandidateClone = mCandidate.copy();
+/*  495 */       exp = preStem + Hangul.combine(lastHg.cho, getMoeum(lastHg, preLastHg), ' ');
+/*  496 */       if (lastHg.jung == 'ㅜ')
+/*  497 */         mCandidateClone.add(new Morpheme("어", POSTag.ECS));
+/*      */       else {
+/*  499 */         mCandidateClone.add(new Morpheme("아", POSTag.ECS));
+/*      */       }
+/*  501 */       mCandidateClone.setExp(exp);
+/*  502 */       mCandidateClone.clearHavingCondition();
+/*  503 */       mCandidateClone.initHavingCond(exp);
+/*  504 */       mCandidateClone.addHavingCond(Condition.AH);
+/*  505 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  506 */       ret.add(mCandidateClone);
+/*      */     }
+/*  509 */     else if ((!lastHg.hasJong()) && (lastHg.jung == 'ㅚ'))
+/*      */     {
+/*  511 */       mCandidateClone = mCandidate.copy();
+/*  512 */       exp = preStem + Hangul.combine(lastHg.cho, 'ㅙ', ' ');
+/*  513 */       mCandidateClone.add(new Morpheme("어", POSTag.ECS));
+/*  514 */       mCandidateClone.setExp(exp);
+/*  515 */       mCandidateClone.clearHavingCondition();
+/*  516 */       mCandidateClone.initHavingCond(exp);
+/*  517 */       mCandidateClone.addHavingCond(Condition.AH);
+/*  518 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  519 */       ret.add(mCandidateClone);
+/*      */ 
+/*  522 */       mCandidateClone = mCandidate.copy();
+/*  523 */       exp = preStem + Hangul.combine(lastHg.cho, 'ㅙ', 'ㅆ');
+/*  524 */       mCandidateClone.add(new Morpheme("었", POSTag.EPT));
+/*  525 */       mCandidateClone.setExp(exp);
+/*  526 */       mCandidateClone.clearHavingCondition();
+/*  527 */       mCandidateClone.initHavingCond(exp);
+/*  528 */       mCandidateClone.addHavingCond(Condition.EUT);
+/*  529 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  530 */       ret.add(mCandidateClone);
+/*      */     }
+/*      */ 
+/*  537 */     if ("갑겁겹곱굽깁깝껍꼽납눕답덥돕둡땁떱랍럽렵롭립맙맵밉볍섭쉽습엽줍쭙춥탑".indexOf(lastCh) > -1)
+/*      */     {
+/*  540 */       char bChar = Hangul.combine(lastHg.cho, lastHg.jung, ' ');
+/*      */ 
+/*  543 */       if (lastCh == 47101) {
+/*  544 */         mCandidateClone = mCandidate.copy();
+/*  545 */         exp = preStem + 47088;
+/*  546 */         mCandidateClone.add(new Morpheme("ㄴ", POSTag.ETD));
+/*  547 */         mCandidateClone.setExp(exp);
+/*  548 */         mCandidateClone.clearHavingCondition();
+/*  549 */         mCandidateClone.initHavingCond(exp);
+/*  550 */         mCandidateClone.setRealDicLen((byte)exp.length());
+/*  551 */         ret.add(mCandidateClone);
+/*      */       }
+/*      */ 
+/*  555 */       mCandidateClone = mCandidate.copy();
+/*  556 */       if (lastHg.jung == 'ㅗ') {
+/*  557 */         mo = 'ㅘ';
+/*  558 */         mCandidateClone.add(new Morpheme("아", POSTag.ECS));
+/*      */       } else {
+/*  560 */         mo = 'ㅝ';
+/*  561 */         mCandidateClone.add(new Morpheme("어", POSTag.ECS));
+/*      */       }
+/*  563 */       exp = preStem + bChar + Hangul.combine('ㅇ', mo, ' ');
+/*  564 */       mCandidateClone.setExp(exp);
+/*  565 */       mCandidateClone.clearHavingCondition();
+/*  566 */       mCandidateClone.initHavingCond(exp);
+/*  567 */       mCandidateClone.addHavingCond(Condition.AH);
+/*  568 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  569 */       ret.add(mCandidateClone);
+/*      */ 
+/*  572 */       mCandidateClone = mCandidate.copy();
+/*  573 */       mCandidateClone.clearHavingCondition();
+/*  574 */       if (lastHg.jung == 'ㅗ') {
+/*  575 */         mo = 'ㅘ';
+/*  576 */         mCandidateClone.add(new Morpheme("았", POSTag.EPT));
+/*      */       } else {
+/*  578 */         mo = 'ㅝ';
+/*  579 */         mCandidateClone.add(new Morpheme("었", POSTag.EPT));
+/*      */       }
+/*  581 */       exp = preStem + bChar + Hangul.combine('ㅇ', mo, 'ㅆ');
+/*  582 */       mCandidateClone.setExp(exp);
+/*  583 */       mCandidateClone.initHavingCond(exp);
+/*  584 */       mCandidateClone.addHavingCond(Condition.EUT);
+/*  585 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  586 */       ret.add(mCandidateClone);
+/*      */ 
+/*  589 */       mCandidateClone = mCandidate.copy();
+/*  590 */       exp = preStem + bChar + 50864;
+/*  591 */       mCandidateClone.setExp(exp);
+/*  592 */       mCandidateClone.clearHavingCondition();
+/*  593 */       mCandidateClone.initHavingCond(exp);
+/*  594 */       mCandidateClone.addHavingCond(Condition.MINUS_BIEUB);
+/*  595 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  596 */       ret.add(mCandidateClone);
+/*      */ 
+/*  599 */       mCandidateClone = mCandidate.copy();
+/*  600 */       exp = preStem + bChar + 50868;
+/*  601 */       mCandidateClone.add(new Morpheme("ㄴ", POSTag.ETD));
+/*  602 */       mCandidateClone.setExp(exp);
+/*  603 */       mCandidateClone.clearHavingCondition();
+/*  604 */       mCandidateClone.initHavingCond(exp);
+/*  605 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  606 */       ret.add(mCandidateClone);
+/*      */ 
+/*  608 */       mCandidateClone = mCandidate.copy();
+/*  609 */       mCandidateClone.add(new Morpheme("ㄹ", POSTag.ETD));
+/*  610 */       exp = preStem + bChar + 50872;
+/*  611 */       mCandidateClone.setExp(exp);
+/*  612 */       mCandidateClone.clearHavingCondition();
+/*  613 */       mCandidateClone.initHavingCond(exp);
+/*  614 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  615 */       ret.add(mCandidateClone);
+/*      */ 
+/*  617 */       mCandidateClone = mCandidate.copy();
+/*  618 */       mCandidateClone.add(new Morpheme("ㅁ", POSTag.ETN));
+/*  619 */       exp = preStem + bChar + 50880;
+/*  620 */       mCandidateClone.setExp(exp);
+/*  621 */       mCandidateClone.clearHavingCondition();
+/*  622 */       mCandidateClone.initHavingCond(exp);
+/*  623 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  624 */       ret.add(mCandidateClone);
+/*      */     }
+/*  627 */     else if ("젓짓긋낫붓잇".indexOf(lastCh) > -1)
+/*      */     {
+/*  629 */       mCandidateClone = mCandidate.copy();
+/*  630 */       exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, ' ');
+/*  631 */       mCandidateClone.setExp(exp);
+/*  632 */       mCandidateClone.clearHavingCondition();
+/*  633 */       mCandidateClone.initHavingCond(exp);
+/*  634 */       mCandidateClone.addHavingCond(Condition.MINUS_SIOT);
+/*  635 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  636 */       ret.add(mCandidateClone);
+/*      */     }
+/*  639 */     else if (lastHg.jong == 'ㄷ') {
+/*  640 */       mCandidateClone = mCandidate.copy();
+/*  641 */       exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, 'ㄹ');
+/*  642 */       mCandidateClone.setExp(exp);
+/*  643 */       mCandidateClone.clearHavingCondition();
+/*  644 */       mCandidateClone.initHavingCond(exp);
+/*  645 */       mCandidateClone.addHavingCond(Condition.MINUS_SIOT);
+/*  646 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  647 */       ret.add(mCandidateClone);
+/*      */     }
+/*  650 */     else if ((!lastHg.hasJong()) || (lastHg.jong == 'ㄹ') || 
+/*  652 */       (lastHg.jong == 'ㅎ'))
+/*      */     {
+/*  656 */       mCandidateClone = mCandidate.copy();
+/*  657 */       mCandidateClone.add(new Morpheme("ㄴ", POSTag.ETD));
+/*  658 */       exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, 'ㄴ');
+/*  659 */       mCandidateClone.setExp(exp);
+/*  660 */       mCandidateClone.clearHavingCondition();
+/*  661 */       mCandidateClone.initHavingCond(exp);
+/*  662 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  663 */       ret.add(mCandidateClone);
+/*      */ 
+/*  665 */       mCandidateClone = mCandidate.copy();
+/*  666 */       exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, 'ㄹ');
+/*  667 */       mCandidateClone.add(new Morpheme("ㄹ", POSTag.ETD));
+/*  668 */       mCandidateClone.setExp(exp);
+/*  669 */       mCandidateClone.clearHavingCondition();
+/*  670 */       mCandidateClone.initHavingCond(exp);
+/*  671 */       mCandidateClone.setRealDicLen((byte)exp.length());
+/*  672 */       ret.add(mCandidateClone);
+/*      */ 
+/*  675 */       if (lastHg.jong == 'ㄹ') {
+/*  676 */         mCandidateClone = mCandidate.copy();
+/*  677 */         exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, 'ㄻ');
+/*  678 */         mCandidateClone.add(new Morpheme("ㅁ", POSTag.ETN));
+/*  679 */         mCandidateClone.setExp(exp);
+/*  680 */         mCandidateClone.clearHavingCondition();
+/*  681 */         mCandidateClone.initHavingCond(exp);
+/*  682 */         mCandidateClone.setRealDicLen((byte)exp.length());
+/*  683 */         ret.add(mCandidateClone);
+/*      */ 
+/*  686 */         mCandidateClone = mCandidate.copy();
+/*  687 */         exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, ' ');
+/*  688 */         mCandidateClone.setExp(exp);
+/*  689 */         mCandidateClone.clearHavingCondition();
+/*  690 */         mCandidateClone.initHavingCond(exp);
+/*  691 */         mCandidateClone.addHavingCond(Condition.MINUS_LIEUL);
+/*  692 */         mCandidateClone.setCandDicLen((byte)exp.length());
+/*  693 */         ret.add(mCandidateClone);
+/*      */       }
+/*  696 */       else if (lastHg.jong == 'ㅎ') {
+/*  697 */         mCandidateClone = mCandidate.copy();
+/*  698 */         exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, ' ');
+/*  699 */         mCandidateClone.setExp(exp);
+/*  700 */         mCandidateClone.clearHavingCondition();
+/*  701 */         mCandidateClone.initHavingCond(exp);
+/*  702 */         mCandidateClone.addHavingCond(Condition.MINUS_HIEUT);
+/*  703 */         mCandidateClone.setCandDicLen((byte)exp.length());
+/*  704 */         ret.add(mCandidateClone);
+/*      */       } else {
+/*  706 */         mCandidateClone = mCandidate.copy();
+/*  707 */         mCandidateClone.add(new Morpheme("ㅁ", POSTag.ETN));
+/*  708 */         exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, 'ㅁ');
+/*  709 */         mCandidateClone.setExp(exp);
+/*  710 */         mCandidateClone.clearHavingCondition();
+/*  711 */         mCandidateClone.initHavingCond(exp);
+/*  712 */         mCandidateClone.setRealDicLen((byte)exp.length());
+/*  713 */         ret.add(mCandidateClone);
+/*      */       }
+/*      */ 
+/*  716 */       mCandidateClone = mCandidate.copy();
+/*  717 */       exp = preStem + Hangul.combine(lastHg.cho, lastHg.jung, 'ㅂ');
+/*  718 */       mCandidateClone.setExp(exp);
+/*  719 */       mCandidateClone.clearHavingCondition();
+/*  720 */       mCandidateClone.addHavingCond(Condition.BIEUB);
+/*  721 */       mCandidateClone.initHavingCond(exp);
+/*  722 */       mCandidateClone.setCandDicLen((byte)exp.length());
+/*  723 */       ret.add(mCandidateClone);
+/*      */     }
+/*      */ 
+/*  727 */     return ret;
+/*      */   }
+/*      */ 
+/*      */   static char getMoeum(Hangul lastHg, Hangul preLastHg)
+/*      */   {
+/*  742 */     char mo = '\000';
+/*  743 */     char mo1 = lastHg.jung;
+/*  744 */     if (mo1 == 'ㅗ')
+/*  745 */       mo = 'ㅘ';
+/*  746 */     else if (mo1 == 'ㅜ') {
+/*  747 */       if (lastHg.cho == 'ㅍ')
+/*  748 */         mo = 'ㅓ';
+/*      */       else
+/*  750 */         mo = 'ㅝ';
+/*      */     }
+/*  752 */     else if (mo1 == 'ㅡ') {
+/*  753 */       if ((preLastHg != null) && (Hangul.MO_POSITIVE_SET.contains(preLastHg.jung)))
+/*  754 */         mo = 'ㅏ';
+/*      */       else {
+/*  756 */         mo = 'ㅓ';
+/*      */       }
+/*      */     }
+/*  759 */     return mo;
+/*      */   }
+/*      */ 
+/*      */   private void add(String exp, MCandidate mc)
+/*      */     throws Exception
+/*      */   {
+/*  776 */     mc.calcHashCode();
+/*      */ 
+/*  778 */     mc.calcLnprOfTagging();
+/*      */ 
+/*  780 */     MExpression me = get(exp);
+/*      */ 
+/*  782 */     if (me == null) {
+/*  783 */       me = new MExpression(exp, mc);
+/*  784 */       float lnprOfSpacing = SpacingPDDictionary.getProb(exp);
+/*  785 */       mc.setLnprOfSpacing(lnprOfSpacing);
+/*  786 */       me.setLnprOfSpacing(lnprOfSpacing);
+/*  787 */       this.table.put(exp, me);
+/*  788 */       if (this.maxLen < exp.length())
+/*  789 */         this.maxLen = exp.length();
+/*      */     }
+/*      */     else {
+/*  792 */       mc.setLnprOfSpacing(me.getLnprOfSpacing());
+/*  793 */       me.add(mc);
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public boolean containVerbStem(String exp)
+/*      */   {
+/*  800 */     return this.verbStemSet.contains(exp);
+/*      */   }
+/*      */ 
+/*      */   public boolean containNoun(String exp)
+/*      */   {
+/*  806 */     MExpression me = (MExpression)this.table.get(exp);
+/*  807 */     if (me == null) return false;
+/*  808 */     label58: for (Iterator localIterator = me.iterator(); localIterator.hasNext(); 
+/*  809 */       return true)
+/*      */     {
+/*  808 */       MCandidate mc = (MCandidate)localIterator.next();
+/*  809 */       if ((mc.size() != 1) || (!mc.isFirstTagOf(POSTag.NNA))) break label58;
+/*      */     }
+/*  811 */     return false;
+/*      */   }
+/*      */ 
+/*      */   private synchronized MExpression get(String exp)
+/*      */   {
+/*  817 */     return (MExpression)this.table.get(exp);
+/*      */   }
+/*      */ 
+/*      */   public synchronized MExpression getMExpression(String exp)
+/*      */   {
+/*  832 */     MExpression ret = get(exp);
+/*  833 */     return ret == null ? null : ret.copy();
+/*      */   }
+/*      */ 
+/*      */   public synchronized String[] getCompNoun(String noun)
+/*      */   {
+/*  848 */     return (String[])this.compNounTable.get(noun);
+/*      */   }
+/*      */ 
+/*      */   private void load(SimpleDicReader simpleDicReader)
+/*      */     throws Exception
+/*      */   {
+/*  864 */     String line = null;
+/*      */     try
+/*      */     {
+/*  867 */       String[] strArrTemp = (String[])null;
+/*  868 */       while ((line = simpleDicReader.readLine()) != null)
+/*  869 */         if ((Util.valid(line)) && (!line.startsWith("//"))) {
+/*  870 */           line = line.trim();
+/*      */ 
+/*  872 */           String exp = null; String mpInfo = null; String condInfo = null;
+/*      */ 
+/*  874 */           if (line.indexOf(';') > 0) {
+/*  875 */             strArrTemp = line.split(";");
+/*  876 */             mpInfo = strArrTemp[0];
+/*  877 */             if (strArrTemp.length > 1)
+/*  878 */               condInfo = strArrTemp[1];
+/*      */           }
+/*      */           else {
+/*  881 */             mpInfo = line;
+/*      */           }
+/*      */ 
+/*  884 */           exp = mpInfo.split("/")[0];
+/*      */ 
+/*  886 */           String atl = null; String hcl = null; String ccl = null; String ecl = null; String compResult = null;
+/*  887 */           if (condInfo != null)
+/*      */           {
+/*  889 */             StringTokenizer st = new StringTokenizer(condInfo, "#&@￢%$", true);
+/*  890 */             while (st.hasMoreTokens()) {
+/*  891 */               String token = st.nextToken();
+/*      */ 
+/*  893 */               if (token.equals("#")) {
+/*  894 */                 token = st.nextToken().trim();
+/*  895 */                 atl = token.substring(1, token.length() - 1);
+/*      */               }
+/*  898 */               else if (token.equals("&")) {
+/*  899 */                 token = st.nextToken().trim();
+/*  900 */                 hcl = token.substring(1, token.length() - 1);
+/*      */               }
+/*  903 */               else if (token.equals("@")) {
+/*  904 */                 token = st.nextToken().trim();
+/*  905 */                 ccl = token.substring(1, token.length() - 1);
+/*      */               }
+/*  908 */               else if (token.equals("￢")) {
+/*  909 */                 token = st.nextToken().trim();
+/*  910 */                 ecl = token.substring(1, token.length() - 1);
+/*      */               }
+/*  913 */               else if (token.equals("$")) {
+/*  914 */                 token = st.nextToken().trim();
+/*  915 */                 compResult = token.substring(1, token.length() - 1);
+/*      */               }
+/*      */             }
+/*      */           }
+/*      */ 
+/*  920 */           MCandidate mCandidate = MCandidate.create(exp, mpInfo, atl, hcl, ccl, ecl);
+/*      */ 
+/*  922 */           add(mCandidate.getExp(), mCandidate);
+/*      */ 
+/*  925 */           if (mCandidate.isTagOf(POSTag.V | POSTag.XSV | POSTag.XSA)) {
+/*  926 */             this.verbStemSet.add(exp);
+/*  927 */             List mcList = getVerbExtendedMC(mCandidate);
+/*  928 */             int i = 0; for (int size = mcList.size(); i < size; i++) {
+/*  929 */               MCandidate mc = (MCandidate)mcList.get(i);
+/*  930 */               add(mc.getExp(), mc);
+/*      */             }
+/*      */ 
+/*      */           }
+/*  963 */           else if (Util.valid(compResult)) {
+/*  964 */             this.compNounTable.put(exp, compResult.split("[+]"));
+/*      */           }
+/*      */         }
+/*      */     }
+/*      */     catch (Exception e) {
+/*  969 */       System.err.println(line);
+/*  970 */       throw e;
+/*      */     } finally {
+/*  972 */       simpleDicReader.cleanup();
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   private void load(RawDicReader rawDicReader)
+/*      */     throws Exception
+/*      */   {
+/*  989 */     String line = null;
+/*      */     try {
+/*  991 */       String[] arr = (String[])null;
+/*  992 */       String string = null; String temp = null;
+/*  993 */       while ((line = rawDicReader.readLine()) != null)
+/*  994 */         if ((Util.valid(line)) && (!line.startsWith("//"))) {
+/*  995 */           line = line.trim();
+/*  996 */           arr = line.split(":");
+/*  997 */           string = arr[0];
+/*  998 */           if (arr.length >= 2) {
+/*  999 */             arr = arr[1].split(";");
+/* 1000 */             int i = 0; for (int stop = arr.length; i < stop; i++) {
+/* 1001 */               temp = arr[i].trim();
+/* 1002 */               add(string, MCandidate.create(string, temp.substring(1, temp.length() - 1)));
+/*      */             }
+/*      */           }
+/*      */         }
+/*      */     } catch (Exception e) { System.err.println(line);
+/* 1007 */       throw e;
+/*      */     } finally {
+/* 1009 */       rawDicReader.cleanup();
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   private void load(DicReader dicReader)
+/*      */     throws Exception
+/*      */   {
+/* 1026 */     if ((dicReader instanceof SimpleDicReader))
+/* 1027 */       load((SimpleDicReader)dicReader);
+/* 1028 */     else if ((dicReader instanceof RawDicReader))
+/* 1029 */       load((RawDicReader)dicReader);
+/*      */     else
+/* 1031 */       throw new Exception("Unknown dictionary reader type.");
+/*      */   }
+/*      */ 
+/*      */   void loadSimple(String fileName)
+/*      */     throws Exception
+/*      */   {
+/* 1048 */     System.out.println("Loading " + fileName);
+/* 1049 */     Timer timer = new Timer();
+/* 1050 */     timer.start();
+/*      */     try {
+/* 1052 */       load(new SimpleDicFileReader(fileName));
+/*      */     } finally {
+/* 1054 */       timer.stop();
+/* 1055 */       System.out.println("Loaded " + timer.getInterval() + "secs");
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   private void loadRaw(String fileName)
+/*      */     throws Exception
+/*      */   {
+/* 1072 */     System.out.println("Loading " + fileName);
+/* 1073 */     Timer timer = new Timer();
+/* 1074 */     timer.start();
+/*      */     try
+/*      */     {
+/* 1077 */       load(new RawDicFileReader(fileName));
+/*      */     } catch (Exception e) {
+/* 1079 */       throw e;
+/*      */     } finally {
+/* 1081 */       timer.stop();
+/* 1082 */       System.out.println("Loaded " + timer.getInterval() + "secs");
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   protected void loadDic()
+/*      */     throws Exception
+/*      */   {
+/* 1090 */     loadSimple("/dic/noun.dic");
+/* 1091 */     loadSimple("/dic/verb.dic");
+/* 1092 */     loadSimple("/dic/simple.dic");
+/* 1093 */     loadSimple("/dic/person.dic");
+/* 1094 */     loadSimple("/dic/kcc.dic");
+/* 1095 */     loadRaw("/dic/raw.dic");
+/*      */   }
+/*      */ 
+/*      */   public void printToFile(String fileName)
+/*      */   {
+/* 1109 */     PrintWriter pw = null;
+/*      */     try {
+/* 1111 */       pw = new PrintWriter(new FileOutputStream(new File(fileName)));
+/* 1112 */       ArrayList list = new ArrayList(this.table.values());
+/* 1113 */       Collections.sort(list);
+/* 1114 */       int i = 0; for (int stop = list.size(); i < stop; i++) {
+/* 1115 */         MExpression me = (MExpression)list.get(i);
+/* 1116 */         pw.println(me);
+/* 1117 */         pw.flush();
+/*      */       }
+/*      */     } catch (Exception e) {
+/* 1120 */       e.printStackTrace();
+/*      */     } finally {
+/* 1122 */       if (pw != null) pw.close();
+/*      */     }
+/*      */   }
+/*      */ 
+/*      */   public List<MExpression> getAsList()
+/*      */   {
+/* 1137 */     if (this.table == null) return null;
+/* 1138 */     if (this.meList == null) this.meList = new ArrayList(this.table.values());
+/* 1139 */     return this.meList;
+/*      */   }
+/*      */ 
+/*      */   public List<MCandidate> search(String str)
+/*      */   {
+/* 1145 */     Timer timer = new Timer();
+/* 1146 */     timer.start();
+/* 1147 */     List ret = new ArrayList();
+/* 1148 */     getAsList();
+/* 1149 */     for (int i = 0; i < this.meList.size(); i++) {
+/* 1150 */       MExpression me = (MExpression)this.meList.get(i);
+/* 1151 */       if (me.getExp().indexOf(str) > -1) {
+/* 1152 */         ret.addAll(me);
+/*      */       }
+/*      */     }
+/* 1155 */     timer.printMsg(ret.size() + " candidates found.");
+/* 1156 */     timer.stop();
+/* 1157 */     return ret;
+/*      */   }
+/*      */ 
+/*      */   public List<Morpheme> getWordList()
+/*      */   {
+/* 1171 */     ArrayList morpList = new ArrayList();
+/*      */     Iterator localIterator2;
+/* 1173 */     for (Iterator localIterator1 = this.table.values().iterator(); localIterator1.hasNext(); 
+/* 1174 */       localIterator2.hasNext())
+/*      */     {
+/* 1173 */       MExpression me = (MExpression)localIterator1.next();
+/* 1174 */       localIterator2 = me.iterator(); continue; MCandidate mc = (MCandidate)localIterator2.next();
+/* 1175 */       if (mc.size() == 1) {
+/* 1176 */         morpList.add((Morpheme)mc.get(0));
+/*      */       }
+/*      */ 
+/*      */     }
+/*      */ 
+/* 1181 */     return morpList;
+/*      */   }
+/*      */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.dic.Dictionary
+ * JD-Core Version:    0.6.1
+ */

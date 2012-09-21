@@ -1,0 +1,490 @@
+/*     */ package org.snu.ids.ha.tools;
+/*     */ 
+/*     */ import java.awt.BorderLayout;
+/*     */ import java.awt.Container;
+/*     */ import java.awt.Dimension;
+/*     */ import java.awt.FlowLayout;
+/*     */ import java.awt.event.ActionEvent;
+/*     */ import java.awt.event.ActionListener;
+/*     */ import java.io.BufferedReader;
+/*     */ import java.io.File;
+/*     */ import java.io.FileReader;
+/*     */ import java.io.PrintWriter;
+/*     */ import java.util.Comparator;
+/*     */ import java.util.List;
+/*     */ import javax.swing.BorderFactory;
+/*     */ import javax.swing.JButton;
+/*     */ import javax.swing.JCheckBox;
+/*     */ import javax.swing.JFileChooser;
+/*     */ import javax.swing.JFrame;
+/*     */ import javax.swing.JLabel;
+/*     */ import javax.swing.JPanel;
+/*     */ import javax.swing.JProgressBar;
+/*     */ import javax.swing.JScrollPane;
+/*     */ import javax.swing.JSplitPane;
+/*     */ import javax.swing.JTabbedPane;
+/*     */ import javax.swing.JTable;
+/*     */ import javax.swing.JTextArea;
+/*     */ import javax.swing.JTextField;
+/*     */ import javax.swing.JViewport;
+/*     */ import javax.swing.table.AbstractTableModel;
+/*     */ import javax.swing.table.TableRowSorter;
+/*     */ import org.snu.ids.ha.dic.Dictionary;
+/*     */ import org.snu.ids.ha.index.Keyword;
+/*     */ import org.snu.ids.ha.index.KeywordExtractor;
+/*     */ import org.snu.ids.ha.index.KeywordList;
+/*     */ import org.snu.ids.ha.ma.Sentence;
+/*     */ import org.snu.ids.ha.util.Timer;
+/*     */ import org.snu.ids.ha.util.Util;
+/*     */ 
+/*     */ public class TesterGUI extends JFrame
+/*     */ {
+/* 102 */   JTextArea logText = null;
+/* 103 */   JPanel statusPanel = null;
+/* 104 */   KeywordExtractor ke = null;
+/* 105 */   JProgressBar progressBar = null;
+/* 106 */   JLabel lineLabel = null;
+/* 107 */   JLabel statusLabel = null;
+/*     */ 
+/*     */   public static void main(String[] args)
+/*     */   {
+/*  57 */     TesterGUI gui = new TesterGUI();
+/*  58 */     gui.setVisible(true);
+/*     */   }
+/*     */ 
+/*     */   public TesterGUI()
+/*     */   {
+/*  64 */     setSize(1024, 800);
+/*  65 */     setDefaultCloseOperation(3);
+/*  66 */     setTitle("Korean Morpheme Analyzer Tester");
+/*     */ 
+/*  68 */     Container c = getContentPane();
+/*  69 */     c.setLayout(new BorderLayout());
+/*     */ 
+/*  71 */     JTabbedPane tabPane = new JTabbedPane();
+/*     */ 
+/*  74 */     tabPane.addTab("색인어 추출기", new KEPanel());
+/*  75 */     tabPane.addTab("분석기", new MAPanel());
+/*     */ 
+/*  77 */     JSplitPane sp = new JSplitPane(0, tabPane, getLogPanel());
+/*  78 */     sp.setOneTouchExpandable(true);
+/*  79 */     sp.setDividerLocation(600);
+/*     */ 
+/*  81 */     c.add(sp, "Center");
+/*     */ 
+/*  83 */     this.statusPanel = new JPanel(new FlowLayout(2));
+/*  84 */     this.statusPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+/*     */ 
+/*  86 */     this.lineLabel = new JLabel();
+/*  87 */     this.statusPanel.add(this.lineLabel);
+/*     */ 
+/*  89 */     this.progressBar = new JProgressBar();
+/*  90 */     this.progressBar.setPreferredSize(new Dimension(200, 15));
+/*  91 */     this.progressBar.setBorderPainted(false);
+/*  92 */     this.statusPanel.add(this.progressBar);
+/*     */ 
+/*  94 */     this.statusLabel = new JLabel();
+/*  95 */     this.statusPanel.add(this.statusLabel);
+/*     */ 
+/*  98 */     c.add(this.statusPanel, "South");
+/*     */   }
+/*     */ 
+/*     */   void createKE()
+/*     */   {
+/* 112 */     startJob("사전 읽기");
+/* 113 */     Timer timer = new Timer();
+/* 114 */     timer.start();
+/* 115 */     this.ke = new KeywordExtractor();
+/* 116 */     timer.stop();
+/* 117 */     endJob(timer.getInterval());
+/*     */   }
+/*     */ 
+/*     */   void startJob(String job)
+/*     */   {
+/* 123 */     this.progressBar.setIndeterminate(true);
+/* 124 */     this.progressBar.setBorderPainted(true);
+/* 125 */     this.statusLabel.setText(job);
+/* 126 */     printlog(job);
+/*     */   }
+/*     */ 
+/*     */   void endJob(double interval)
+/*     */   {
+/* 131 */     this.progressBar.setIndeterminate(false);
+/* 132 */     this.progressBar.setBorderPainted(false);
+/* 133 */     this.statusLabel.setText(interval + "초");
+/* 134 */     printlog("완료: " + interval + "초");
+/*     */   }
+/*     */ 
+/*     */   public JPanel getLogPanel()
+/*     */   {
+/* 140 */     JPanel panel = new JPanel(new BorderLayout());
+/* 141 */     panel.setBorder(BorderFactory.createTitledBorder("Console"));
+/* 142 */     this.logText = new JTextArea();
+/* 143 */     this.logText.setTabSize(4);
+/* 144 */     this.logText.setEditable(false);
+/* 145 */     JScrollPane sp = new JScrollPane();
+/* 146 */     sp.getViewport().add(this.logText);
+/* 147 */     panel.add(sp, "Center");
+/* 148 */     return panel;
+/*     */   }
+/*     */ 
+/*     */   void printlog(final String log)
+/*     */   {
+/* 154 */     Thread thread = new Thread()
+/*     */     {
+/*     */       public void run()
+/*     */       {
+/* 158 */         TesterGUI.this.logText.append(log + "\n");
+/*     */       }
+/*     */     };
+/* 161 */     thread.start();
+/*     */   }
+/*     */ 
+/*     */   class KEPanel extends JPanel
+/*     */     implements ActionListener
+/*     */   {
+/* 288 */     JTextArea srcText = null;
+/* 289 */     JCheckBox onlyNounCheck = null;
+/* 290 */     JTable table = null;
+/* 291 */     KeywordList keywordList = null;
+/* 292 */     File recentDir = null;
+/*     */ 
+/*     */     public KEPanel()
+/*     */     {
+/* 297 */       super();
+/* 298 */       setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+/* 299 */       JSplitPane sp = new JSplitPane(1, getSrcPane(), getResultPane());
+/* 300 */       sp.setOneTouchExpandable(true);
+/* 301 */       sp.setDividerLocation(500);
+/* 302 */       add(sp, "Center");
+/*     */     }
+/*     */ 
+/*     */     public JPanel getSrcPane()
+/*     */     {
+/* 308 */       JPanel panel = new JPanel(new BorderLayout());
+/*     */ 
+/* 310 */       JPanel menuPanel = new JPanel(new FlowLayout(2));
+/*     */ 
+/* 312 */       this.onlyNounCheck = new JCheckBox("명사만 추출");
+/* 313 */       menuPanel.add(this.onlyNounCheck);
+/*     */ 
+/* 315 */       JButton button = new JButton("파일 열기");
+/* 316 */       button.setActionCommand("OPEN_FILE");
+/* 317 */       button.addActionListener(this);
+/* 318 */       menuPanel.add(button);
+/*     */ 
+/* 320 */       button = new JButton("파일로 저장");
+/* 321 */       button.setActionCommand("SAVE_TO_FILE");
+/* 322 */       button.addActionListener(this);
+/* 323 */       menuPanel.add(button);
+/*     */ 
+/* 325 */       button = new JButton("분석하기");
+/* 326 */       button.setActionCommand("ANALYZE");
+/* 327 */       button.addActionListener(this);
+/* 328 */       menuPanel.add(button);
+/*     */ 
+/* 330 */       panel.add(menuPanel, "North");
+/*     */ 
+/* 332 */       this.srcText = new JTextArea();
+/* 333 */       this.srcText.setTabSize(4);
+/* 334 */       JScrollPane sp = new JScrollPane();
+/* 335 */       sp.getViewport().add(this.srcText);
+/*     */ 
+/* 337 */       JPanel srcPanel = new JPanel(new BorderLayout());
+/* 338 */       srcPanel.setBorder(BorderFactory.createTitledBorder("Contents"));
+/* 339 */       srcPanel.add(sp);
+/*     */ 
+/* 341 */       panel.add(srcPanel, "Center");
+/*     */ 
+/* 343 */       return panel;
+/*     */     }
+/*     */ 
+/*     */     public JPanel getResultPane()
+/*     */     {
+/* 349 */       JPanel panel = new JPanel(new BorderLayout());
+/*     */ 
+/* 351 */       this.table = new JTable(new KeywordDataModel());
+/* 352 */       this.table.setAutoCreateRowSorter(true);
+/*     */ 
+/* 354 */       JScrollPane sp = new JScrollPane();
+/* 355 */       sp.getViewport().add(this.table);
+/*     */ 
+/* 357 */       panel.add(sp, "Center");
+/*     */ 
+/* 359 */       return panel;
+/*     */     }
+/*     */ 
+/*     */     public void actionPerformed(ActionEvent ae)
+/*     */     {
+/* 373 */       String cmd = ae.getActionCommand();
+/*     */ 
+/* 375 */       if (cmd.equals("OPEN_FILE")) {
+/* 376 */         JFileChooser jfc = new JFileChooser();
+/* 377 */         if (this.recentDir == null) {
+/* 378 */           File curDir = new File("");
+/* 379 */           this.recentDir = curDir.getAbsoluteFile();
+/*     */         }
+/* 381 */         jfc.setCurrentDirectory(this.recentDir);
+/* 382 */         if (jfc.showOpenDialog(this) == 0) {
+/* 383 */           File file = jfc.getSelectedFile();
+/* 384 */           this.recentDir = file.getParentFile();
+/* 385 */           readFile(file);
+/*     */         }
+/* 387 */       } else if (cmd.equals("SAVE_TO_FILE")) {
+/* 388 */         JFileChooser jfc = new JFileChooser();
+/* 389 */         File curDir = new File("");
+/* 390 */         jfc.setCurrentDirectory(curDir.getAbsoluteFile());
+/* 391 */         if (jfc.showSaveDialog(this) == 0) {
+/* 392 */           File file = jfc.getSelectedFile();
+/* 393 */           this.recentDir = file.getParentFile();
+/* 394 */           saveToFile(file);
+/*     */         }
+/* 396 */       } else if (cmd.equals("ANALYZE")) {
+/* 397 */         analyze();
+/*     */       }
+/*     */     }
+/*     */ 
+/*     */     void readFile(File file)
+/*     */     {
+/* 404 */       BufferedReader br = null;
+/*     */       try {
+/* 406 */         TesterGUI.this.printlog("READING FILE: " + file.getAbsolutePath());
+/* 407 */         br = new BufferedReader(new FileReader(file));
+/*     */ 
+/* 409 */         String line = null;
+/* 410 */         cleanSrcText();
+/* 411 */         while ((line = br.readLine()) != null) {
+/* 412 */           this.srcText.append(line + "\n");
+/*     */         }
+/* 414 */         this.srcText.updateUI();
+/* 415 */         br.close();
+/*     */       } catch (Exception e) {
+/* 417 */         TesterGUI.this.printlog("ERROR: " + e.toString());
+/*     */       }
+/*     */     }
+/*     */ 
+/*     */     void saveToFile(File file)
+/*     */     {
+/* 424 */       PrintWriter pw = null;
+/*     */       try {
+/* 426 */         pw = new PrintWriter(file);
+/*     */ 
+/* 428 */         int i = 0; for (int size = this.keywordList == null ? 0 : this.keywordList.size(); i < size; i++) {
+/* 429 */           Keyword keyword = (Keyword)this.keywordList.get(i);
+/* 430 */           pw.println(keyword.getIndex() + "\t" + keyword.getString() + "\t" + keyword.getTag() + "\t" + keyword.getCnt());
+/*     */         }
+/* 432 */         pw.flush();
+/* 433 */         pw.close();
+/*     */       } catch (Exception e) {
+/* 435 */         TesterGUI.this.printlog("ERROR: " + e.toString());
+/*     */       }
+/*     */     }
+/*     */ 
+/*     */     void cleanSrcText()
+/*     */     {
+/* 442 */       this.srcText.setText("");
+/*     */     }
+/*     */ 
+/*     */     void analyze()
+/*     */     {
+/* 448 */       Thread thread = new Thread()
+/*     */       {
+/*     */         public void run()
+/*     */         {
+/* 452 */           String string = TesterGUI.KEPanel.this.srcText.getText();
+/* 453 */           if (!Util.valid(string)) {
+/* 454 */             TesterGUI.this.printlog("분석할 문장이 없습니다.");
+/* 455 */             return;
+/*     */           }
+/*     */           try {
+/* 458 */             if (TesterGUI.this.ke == null) TesterGUI.this.createKE();
+/* 459 */             TesterGUI.this.startJob("단어 추출");
+/* 460 */             Timer timer = new Timer();
+/* 461 */             timer.start();
+/* 462 */             TesterGUI.KEPanel.this.keywordList = TesterGUI.this.ke.extractKeyword(TesterGUI.this.progressBar, TesterGUI.this.lineLabel, string, TesterGUI.KEPanel.this.onlyNounCheck.isSelected());
+/* 463 */             TesterGUI.KEPanel.this.updateTableMode();
+/* 464 */             TesterGUI.this.printlog("전체 단어 수: " + TesterGUI.KEPanel.this.keywordList.getDocLen());
+/* 465 */             timer.stop();
+/* 466 */             TesterGUI.this.endJob(timer.getInterval());
+/*     */           } catch (Exception e) {
+/* 468 */             e.printStackTrace();
+/*     */           }
+/*     */         }
+/*     */       };
+/* 472 */       thread.start();
+/*     */     }
+/*     */ 
+/*     */     void updateTableMode()
+/*     */     {
+/* 478 */       this.table.setModel(new KeywordDataModel());
+/* 479 */       TableRowSorter sorter = new TableRowSorter(this.table.getModel());
+/* 480 */       Comparator intComparator = new Comparator()
+/*     */       {
+/*     */         public int compare(Integer arg0, Integer arg1)
+/*     */         {
+/* 486 */           return arg0.intValue() - arg1.intValue();
+/*     */         }
+/*     */       };
+/* 489 */       sorter.setComparator(0, intComparator);
+/* 490 */       sorter.setComparator(3, intComparator);
+/* 491 */       this.table.setRowSorter(sorter);
+/* 492 */       this.table.updateUI();
+/*     */     }
+/*     */ 
+/*     */     class KeywordDataModel extends AbstractTableModel
+/*     */     {
+/*     */       KeywordDataModel()
+/*     */       {
+/*     */       }
+/*     */ 
+/*     */       public int getColumnCount()
+/*     */       {
+/* 509 */         return 4;
+/*     */       }
+/*     */ 
+/*     */       public int getRowCount()
+/*     */       {
+/* 523 */         return TesterGUI.KEPanel.this.keywordList == null ? 0 : TesterGUI.KEPanel.this.keywordList.size();
+/*     */       }
+/*     */ 
+/*     */       public String getColumnName(int col)
+/*     */       {
+/* 529 */         switch (col) {
+/*     */         case 0:
+/* 531 */           return "위치";
+/*     */         case 1:
+/* 533 */           return "단어";
+/*     */         case 2:
+/* 535 */           return "품사";
+/*     */         case 3:
+/* 537 */           return "횟수";
+/*     */         }
+/* 539 */         return null;
+/*     */       }
+/*     */ 
+/*     */       public Object getValueAt(int row, int col)
+/*     */       {
+/* 555 */         if ((TesterGUI.KEPanel.this.keywordList == null) || (row >= TesterGUI.KEPanel.this.keywordList.size())) return null;
+/* 556 */         Keyword keyword = (Keyword)TesterGUI.KEPanel.this.keywordList.get(row);
+/* 557 */         switch (col) {
+/*     */         case 0:
+/* 559 */           return Integer.valueOf(keyword.getIndex());
+/*     */         case 1:
+/* 561 */           return keyword.getString();
+/*     */         case 2:
+/* 563 */           return keyword.getTag();
+/*     */         case 3:
+/* 565 */           return Integer.valueOf(keyword.getCnt());
+/*     */         }
+/*     */ 
+/* 568 */         return null;
+/*     */       }
+/*     */     }
+/*     */   }
+/*     */ 
+/*     */   class MAPanel extends JPanel
+/*     */     implements ActionListener
+/*     */   {
+/* 169 */     JTextField inputText = null;
+/* 170 */     JTextArea resultText = null;
+/*     */ 
+/*     */     public MAPanel()
+/*     */     {
+/* 175 */       setLayout(new BorderLayout());
+/* 176 */       setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+/*     */ 
+/* 178 */       JPanel topButtonPanel = new JPanel(new BorderLayout());
+/* 179 */       topButtonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+/*     */ 
+/* 181 */       this.inputText = new JTextField();
+/* 182 */       topButtonPanel.add(this.inputText, "Center");
+/*     */ 
+/* 184 */       JButton button = new JButton("분석");
+/* 185 */       button.setActionCommand("ANALYZE");
+/* 186 */       button.addActionListener(this);
+/* 187 */       topButtonPanel.add(button, "East");
+/*     */ 
+/* 189 */       button = new JButton("사전 재로딩");
+/* 190 */       button.setActionCommand("RELOAD");
+/* 191 */       button.addActionListener(this);
+/*     */ 
+/* 193 */       topButtonPanel.add(button, "West");
+/* 194 */       add(topButtonPanel, "North");
+/*     */ 
+/* 196 */       JPanel resultPanel = new JPanel(new BorderLayout());
+/* 197 */       resultPanel.setBorder(BorderFactory.createTitledBorder("분석 결과"));
+/*     */ 
+/* 199 */       this.resultText = new JTextArea();
+/* 200 */       this.resultText.setTabSize(4);
+/* 201 */       this.resultText.setEditable(false);
+/* 202 */       JScrollPane sp = new JScrollPane();
+/* 203 */       sp.getViewport().add(this.resultText);
+/* 204 */       resultPanel.add(sp);
+/*     */ 
+/* 206 */       add(resultPanel, "Center");
+/*     */     }
+/*     */ 
+/*     */     public void actionPerformed(ActionEvent arg0)
+/*     */     {
+/* 219 */       String cmd = arg0.getActionCommand();
+/* 220 */       if (cmd.equals("ANALYZE")) {
+/* 221 */         analyze();
+/* 222 */       } else if (cmd.equals("RELOAD")) {
+/* 223 */         Thread thread = new Thread()
+/*     */         {
+/*     */           public void run()
+/*     */           {
+/* 227 */             TesterGUI.this.startJob("사전 다시 읽기");
+/* 228 */             Timer timer = new Timer();
+/* 229 */             timer.start();
+/* 230 */             Dictionary.reload();
+/* 231 */             timer.stop();
+/* 232 */             TesterGUI.this.endJob(timer.getInterval());
+/*     */           }
+/*     */         };
+/* 235 */         thread.start();
+/*     */       }
+/*     */     }
+/*     */ 
+/*     */     void analyze()
+/*     */     {
+/* 249 */       Thread thread = new Thread()
+/*     */       {
+/*     */         public void run()
+/*     */         {
+/* 253 */           String str = TesterGUI.MAPanel.this.inputText.getText();
+/*     */ 
+/* 255 */           StringBuffer sb = new StringBuffer();
+/* 256 */           if (TesterGUI.this.ke == null) TesterGUI.this.createKE(); try
+/*     */           {
+/* 258 */             Timer timer = new Timer();
+/* 259 */             timer.start();
+/* 260 */             List ret = TesterGUI.this.ke.leaveJustBest(TesterGUI.this.ke.postProcess(TesterGUI.this.ke.analyze(str)));
+/* 261 */             timer.stop();
+/* 262 */             TesterGUI.this.printlog("총 분석 시간: " + timer.getInterval());
+/*     */ 
+/* 264 */             List stl = TesterGUI.this.ke.divideToSentences(ret);
+/* 265 */             for (int i = 0; i < stl.size(); i++) {
+/* 266 */               Sentence st = (Sentence)stl.get(i);
+/* 267 */               sb.append(st.getSentence() + "\n");
+/* 268 */               for (int j = 0; j < st.size(); j++) {
+/* 269 */                 sb.append("\t" + st.get(j) + "\n");
+/*     */               }
+/* 271 */               sb.append("\n");
+/*     */             }
+/*     */ 
+/* 274 */             TesterGUI.MAPanel.this.resultText.setText(sb.toString());
+/*     */           } catch (Exception e) {
+/* 276 */             e.printStackTrace();
+/*     */           }
+/*     */         }
+/*     */       };
+/* 280 */       thread.run();
+/*     */     }
+/*     */   }
+/*     */ }
+
+/* Location:           /Users/blueskywalker/Source/OpenSource/korean/org.snu.ids.ha.jar
+ * Qualified Name:     org.snu.ids.ha.tools.TesterGUI
+ * JD-Core Version:    0.6.1
+ */
