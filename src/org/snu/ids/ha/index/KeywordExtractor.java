@@ -33,6 +33,10 @@
    public static final StringSet RANGE_INDICATOR = new StringSet(new String[] { "-", "±", "~", "+" });
    public static final String STD_UOM_CONNECTOR = "*";
  
+   public KeywordExtractor() {
+       System.out.println("hello KeywordExtractor");
+   }
+   
    public KeywordList extractKeyword(JProgressBar progressBar, JLabel label, String string, boolean onlyNoun)
    {
      KeywordList ret = null;

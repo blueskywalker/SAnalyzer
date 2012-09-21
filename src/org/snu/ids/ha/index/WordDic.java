@@ -9,8 +9,9 @@
  
  public class WordDic extends HashSet<String>
  {
-   int maxLen = -2147483648;
-   int minLen = 2147483647;
+   int maxLen = Integer.MIN_VALUE;  //-2147483648;
+   
+   int minLen = Integer.MAX_VALUE; //2147483647
  
    public WordDic(String fileName)
    {

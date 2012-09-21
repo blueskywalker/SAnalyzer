@@ -123,7 +123,9 @@ public final class TesterGUI extends JFrame {
     }
 
     void printlog(final String log) {
-        Thread thread = new Thread() {
+        Thread thread;
+        thread = new Thread() {
+            @Override
             public void run() {
                 TesterGUI.this.logText.append(log + "\n");
             }
@@ -131,7 +133,7 @@ public final class TesterGUI extends JFrame {
         thread.start();
     }
 
-    class KEPanel extends JPanel
+    final class KEPanel extends JPanel
             implements ActionListener {
 
         JTextArea srcText = null;
@@ -233,12 +235,13 @@ public final class TesterGUI extends JFrame {
         }
 
         void readFile(File file) {
-            BufferedReader br = null;
+            BufferedReader br;
+          
             try {
                 TesterGUI.this.printlog("READING FILE: " + file.getAbsolutePath());
                 br = new BufferedReader(new FileReader(file));
 
-                String line = null;
+                String line;
                 cleanSrcText();
                 while ((line = br.readLine()) != null) {
                     this.srcText.append(line + "\n");
@@ -274,30 +277,30 @@ public final class TesterGUI extends JFrame {
         void analyze() {
             Thread thread;
             thread = new Thread() {
-         @Override
-         public void run() {
-             String string = TesterGUI.KEPanel.this.srcText.getText();
-             if (!Util.valid(string)) {
-                 TesterGUI.this.printlog("분석할 문장이 없습니다.");
-                 return;
-             }
-             try {
-                 if (TesterGUI.this.ke == null) {
-                     TesterGUI.this.createKE();
-                 }
-                 TesterGUI.this.startJob("단어 추출");
-                 Timer timer = new Timer();
-                 timer.start();
-                 TesterGUI.KEPanel.this.keywordList = TesterGUI.this.ke.extractKeyword(TesterGUI.this.progressBar, TesterGUI.this.lineLabel, string, TesterGUI.KEPanel.this.onlyNounCheck.isSelected());
-                 TesterGUI.KEPanel.this.updateTableMode();
-                 TesterGUI.this.printlog("전체 단어 수: " + TesterGUI.KEPanel.this.keywordList.getDocLen());
-                 timer.stop();
-                 TesterGUI.this.endJob(timer.getInterval());
-             } catch (Exception e) {
-                 e.printStackTrace();
-             }
-         }
-     };
+                @Override
+                public void run() {
+                    String string = TesterGUI.KEPanel.this.srcText.getText();
+                    if (!Util.valid(string)) {
+                        TesterGUI.this.printlog("분석할 문장이 없습니다.");
+                        return;
+                    }
+                    try {
+                        if (TesterGUI.this.ke == null) {
+                            TesterGUI.this.createKE();
+                        }
+                        TesterGUI.this.startJob("단어 추출");
+                        Timer timer = new Timer();
+                        timer.start();
+                        TesterGUI.KEPanel.this.keywordList = TesterGUI.this.ke.extractKeyword(TesterGUI.this.progressBar, TesterGUI.this.lineLabel, string, TesterGUI.KEPanel.this.onlyNounCheck.isSelected());
+                        TesterGUI.KEPanel.this.updateTableMode();
+                        TesterGUI.this.printlog("전체 단어 수: " + TesterGUI.KEPanel.this.keywordList.getDocLen());
+                        timer.stop();
+                        TesterGUI.this.endJob(timer.getInterval());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
             thread.start();
         }
 
@@ -421,16 +424,16 @@ public final class TesterGUI extends JFrame {
             } else if (cmd.equals("RELOAD")) {
                 Thread thread;
                 thread = new Thread() {
-             @Override
-             public void run() {
-                 TesterGUI.this.startJob("사전 다시 읽기");
-                 Timer timer = new Timer();
-                 timer.start();
-                 Dictionary.reload();
-                 timer.stop();
-                 TesterGUI.this.endJob(timer.getInterval());
-             }
-         };
+                    @Override
+                    public void run() {
+                        TesterGUI.this.startJob("사전 다시 읽기");
+                        Timer timer = new Timer();
+                        timer.start();
+                        Dictionary.reload();
+                        timer.stop();
+                        TesterGUI.this.endJob(timer.getInterval());
+                    }
+                };
                 thread.start();
             }
         }
@@ -438,37 +441,37 @@ public final class TesterGUI extends JFrame {
         void analyze() {
             Thread thread;
             thread = new Thread() {
-         @Override
-         public void run() {
-             String str = TesterGUI.MAPanel.this.inputText.getText();
+                @Override
+                public void run() {
+                    String str = TesterGUI.MAPanel.this.inputText.getText();
 
-             StringBuilder sb = new StringBuilder();
-             if (TesterGUI.this.ke == null) {
-                 TesterGUI.this.createKE();
-             }
-             try {
-                 Timer timer = new Timer();
-                 timer.start();
-                 List ret = TesterGUI.this.ke.leaveJustBest(TesterGUI.this.ke.postProcess(TesterGUI.this.ke.analyze(str)));
-                 timer.stop();
-                 TesterGUI.this.printlog("총 분석 시간: " + timer.getInterval());
+                    StringBuilder sb = new StringBuilder();
+                    if (TesterGUI.this.ke == null) {
+                        TesterGUI.this.createKE();
+                    }
+                    try {
+                        Timer timer = new Timer();
+                        timer.start();
+                        List ret = TesterGUI.this.ke.leaveJustBest(TesterGUI.this.ke.postProcess(TesterGUI.this.ke.analyze(str)));
+                        timer.stop();
+                        TesterGUI.this.printlog("총 분석 시간: " + timer.getInterval());
 
-                 List stl = TesterGUI.this.ke.divideToSentences(ret);
-                 for (int i = 0; i < stl.size(); i++) {
-                     Sentence st = (Sentence) stl.get(i);
-                     sb.append(st.getSentence()).append("\n");
-                     for (int j = 0; j < st.size(); j++) {
-                         sb.append("\t").append(st.get(j)).append("\n");
-                     }
-                     sb.append("\n");
-                 }
+                        List stl = TesterGUI.this.ke.divideToSentences(ret);
+                        for (int i = 0; i < stl.size(); i++) {
+                            Sentence st = (Sentence) stl.get(i);
+                            sb.append(st.getSentence()).append("\n");
+                            for (int j = 0; j < st.size(); j++) {
+                                sb.append("\t").append(st.get(j)).append("\n");
+                            }
+                            sb.append("\n");
+                        }
 
-                 TesterGUI.MAPanel.this.resultText.setText(sb.toString());
-             } catch (Exception e) {
-                 e.printStackTrace();
-             }
-         }
-     };
+                        TesterGUI.MAPanel.this.resultText.setText(sb.toString());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            };
             thread.start();
         }
     }
